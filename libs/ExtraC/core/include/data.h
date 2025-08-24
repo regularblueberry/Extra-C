@@ -1,8 +1,26 @@
 #pragma once
+
+
+/*======================================|
+	Extra-C Core Data Structs	|
+=======================================*/
+/**
+* @file data.h
+* @brief ExtraC's core data structures
+* @author Blueberry
+* @version 0.1.0
+*/
+
+
 #include "./utils.h"
 #include "./types.h"
 #include "./stringutils.h"
 #include "./mathematics.h"
+
+/**
+@def getDSN_Type(var)
+@return the DSN_fieldType of var or DSN_NULL if not applicable
+*/
 
 #define getDSN_Type(var) _Generic((var),		\
 inst(Number)	: DSN_NUMBER,				\
@@ -12,8 +30,19 @@ inst(Queue)	: DSN_QUEUE,				\
 inst(Stack)	: DSN_STACK,				\
 inst(Map)	: DSN_MAP,				\
 inst(Struct)	: DSN_STRUCT,				\
+data(Number)	: DSN_NUMBER,				\
+data(String)	: DSN_STRING,				\
+data(List)	: DSN_LIST,				\
+data(Queue)	: DSN_QUEUE,				\
+data(Stack)	: DSN_STACK,				\
+data(Map)	: DSN_MAP,				\
+data(Struct)	: DSN_STRUCT,				\
 default		: DSN_NULL)
 
+/**
+@enum DSN_fieldType
+@brief Represents the different valid DSN types
+*/
 Enum(DSN_fieldType,
 	DSN_NULL,
 	DSN_NUMBER,
@@ -26,21 +55,62 @@ Enum(DSN_fieldType,
 );
 typedef struct DSN_data DSN_data;
 
+/**
+@{
+@def RESERVE_MACROS 
+@brief aliases for true and false for use in the **bool exact** parameter in reserve methods
+*/
 #define RESERVE_EXACT   true
 #define RESERVE_ATLEAST false
+/**@}*/
 
+
+/**
+@class IterableList
+@brief interface for any object that can be used in the foreach macros
+@details each method is called exactly once then is iterated on
+*/
 Interface(IterableList,
+/**
+@return the number of items in the item array
+*/
 	u64   imethod(Size);
+/**
+@return the pointer to the item array, if NULL is returned then
+it is treated as an error and the foreach loop will not run
+*/
 	void* imethod(Items);
 )
 
+/**
+@def foreach_pntr(iterable, type, var)
+@param iterable any object who's class has implemented the IterableList interface
+@param type the type of a single member within the iterable object
+@param var the name of the pointer which points to the current member of the iteration
+*/
+#define foreach_pntr(iterable, type, var) 			\
+	u64 __##var##_size = iterable->__methods->		\
+		IterableList.Size(generic iterable); 		\
+	type* var = iterable->__methods->			\
+		IterableList.Items(generic iterable);		\
+	if(var) for(size_t var##_iterator = 0; 			\
+     	    var##_iterator < __##var##_size; 			\
+	    var = &var[++var##_iterator]			\
+	)
+/**
+@def foreach(iterable, type, var)
+@param iterable any object who's class has implemented the IterableList interface
+@param type the type of a single member within the iterable object
+@param var the name of the varible which stores the current member of the iteration
+*/
 #define foreach(iterable, type, var) 				\
 	u64 __##var##_size = iterable->__methods->		\
 		IterableList.Size(generic iterable); 		\
 	type* __##var##_data = iterable->__methods->		\
 		IterableList.Items(generic iterable);		\
-	type var = __##var##_data[0];				\
-	for(size_t var##_iterator = 0; 				\
+	type var = __##var##_data == NULL ? (type){0} : 	\
+		   __##var##_data[0];				\
+	if(__##var##_data) for(size_t var##_iterator = 0; 	\
      	    var##_iterator < __##var##_size; 			\
 	    var = __##var##_data[++var##_iterator]		\
 	)
@@ -49,31 +119,101 @@ Interface(IterableList,
  * Extra-C List Data Structure
  *-----*/
 
-#define l(first, ...) pushList(typeof(first), first, __VA_ARGS__)
-#define L(first, ...) newList(typeof(first), first, __VA_ARGS__)
+/**
+@{
+@def LISTINDEX_MACROS 
+@brief aliases for true and false for use in the **bool write** parameter in the List.Index method
+@details as to avoid having to use the double comma when calling the macro this only works with 
+more than 1 buffer element
 
+the type is infered using typeof() from the first parameter, then the others are assumed to 
+be of the same type
+*/
 #define LISTINDEX_WRITE true
 #define LISTINDEX_READ false
+/**@}*/
 
+/**
+@def List(type)
+@brief readability macro for being explicit about what the list is intended to store
+*/
 #define List(type) inst(List) 
-#define newList(type, ...) new(List, 			\
-		sizeof((type[]){__VA_ARGS__}) 		\
-		/ sizeof(type),				\
+/**
+@def newList(type, ...)
+@brief allocates a static buffer object on the stack 
+*/
+#define newList(type, size) new(List, 			\
+		size,					\
 		sizeof(type),	 			\
 		getDSN_Type((type){0}),			\
-		(type[]){__VA_ARGS__})
-#define pushList(type, ...) push(List, 			\
-		sizeof((type[]){__VA_ARGS__}) 		\
-		/ sizeof(type),				\
+		NULL)
+/**
+@def pushList(type, size)
+@brief allocates a static buffer object on the stack 
+*/
+#define pushList(type, size) push(List, 		\
+		size,					\
 		sizeof(type),	 			\
 		getDSN_Type((type){0}),			\
-		(type[]){__VA_ARGS__})
+		NULL)
+/**
+@def l(first, ...)
+@brief allocates a list object literal on the stack 
+@details the type is infered using typeof() from the first parameter, then the others are assumed to 
+be of the same type
+*/
+#define l(first, ...) push(List, sizeof((typeof(first)[]){first, __VA_ARGS__}) 	\
+				 / sizeof(typeof(first)), 			\
+			   	 sizeof(typeof(first)), 			\
+				 getDSN_Type((typeof(first)){0}),		\
+				 (typeof(first)[]){first, __VA_ARGS__}		\
+			)
+/**
+@def L(first, ...)
+@brief allocates a list object literal on the heap 
+@details the type is infered using typeof() from the first parameter, then the others are assumed to 
+be of the same type
+*/
+#define L(first, ...) new(List, sizeof((typeof(first)[]){first, __VA_ARGS__}) 	\
+				 / sizeof(typeof(first)), 			\
+			   	 sizeof(typeof(first)), 			\
+				 getDSN_Type((typeof(first)){0}),		\
+				 (typeof(first)[]){first, __VA_ARGS__}		\
+			)
+
+
 
 #define ListCast(list, type) \
 List.Cast(list, getDSN_Type((type){0}), sizeof(type))
 
 #define ListCopy(list) List.SubList(list, 0, List.Size(list))
 
+
+
+/**
+@class List
+@implements Formatter
+@implements IterableList
+@brief a dynamic array of any type of arbitrary size
+@details This class represents a dynamic array which can be 
+used wherever an unknown amount of items must be put into an array 
+
+
+@subsection Constructor
+@brief Initializes a Buffer object
+@param init_size	the initial number of elements in the list
+@param type_size	the size of a single element in the list
+@param dsn_type 	the dsn_type of the element's type, this is used for DSN formating
+@param literal		a pointer to an array of the same size, this data will be copied into the internal buffer
+
+
+@subsection DSN
+@details This is one of the basic data type in the DSN format anotated by the [...] syntax
+
+if a list gets overidden we compare the counts from each list
+if the orignal reference count is larger than the overide lists count then the remaining
+elements from the orignal reference are appended to overide list
+*/
 Class(List,
 __INIT(u64 init_size; u64 type_size; DSN_fieldType dsn_type; void* literal;),
 __FIELD(),
@@ -102,23 +242,78 @@ __FIELD(),
  * Extra-C Stack Data Structure
  *-----*/
 
-#define Stack(type) inst(Stack)
-#define newStack(type, ...) new(Stack,			\
-		sizeof((type[]){__VA_ARGS__}) 		\
-		/ sizeof(type),				\
+/**
+@def Stack(type)
+@brief readability macro for being explicit about what the stack is intended to store
+*/
+#define Stack(type) inst(Stack) 
+/**
+@def newStack(type, ...)
+@brief allocates a static buffer object on the stack 
+*/
+#define newStack(type, size) new(Stack, 		\
+		size,					\
 		sizeof(type),	 			\
 		getDSN_Type((type){0}),			\
-		(type[]){__VA_ARGS__})
-
-#define pushStack(type, ...) push(Stack,		\
-		sizeof((type[]){__VA_ARGS__}) 		\
-		/ sizeof(type),				\
+		NULL)
+/**
+@def pushStack(type, size)
+@brief allocates a static buffer object on the stack 
+*/
+#define pushStack(type, size) push(Stack, 		\
+		size,					\
 		sizeof(type),	 			\
 		getDSN_Type((type){0}),			\
-		(type[]){__VA_ARGS__})
+		NULL)
+/**
+@def l_s(first, ...)
+@brief allocates a list object literal on the stack 
+@details the type is infered using typeof() from the first parameter, then the others are assumed to 
+be of the same type
+*/
+#define l_s(first, ...) push(Stack, sizeof((typeof(first)[]){first, __VA_ARGS__}) \
+				 / sizeof(typeof(first)), 			  \
+			   	 sizeof(typeof(first)), 			  \
+				 getDSN_Type((typeof(first)){0}),		  \
+				 (typeof(first)[]){first, __VA_ARGS__}		  \
+			)
+/**
+@def L_S(first, ...)
+@brief allocates a list object literal on the heap 
+@details the type is infered using typeof() from the first parameter, then the others are assumed to 
+be of the same type
+*/
+#define L_S(first, ...) new(Stack, sizeof((typeof(first)[]){first, __VA_ARGS__}) \
+				 / sizeof(typeof(first)), 			 \
+			   	 sizeof(typeof(first)), 			 \
+				 getDSN_Type((typeof(first)){0}),		 \
+				 (typeof(first)[]){first, __VA_ARGS__}		 \
+			)
+
+/**
+@class Stack
+@implements Formatter
+@implements IterableList
+@brief a dynamic stack of any type of arbitrary size
+@details This class represents a dynamic stack which can be 
+used wherever an unknown amount of items must be put into a stack
 
 
+@subsection Constructor
+@brief Initializes a Buffer object
+@param init_size	the initial number of elements in the list
+@param type_size	the size of a single element in the list
+@param dsn_type 	the dsn_type of the element's type, this is used for DSN formating
+@param literal		a pointer to an array of the same size, this data will be copied into the internal buffer
 
+
+@subsection DSN
+@details This is one of the basic data type in the DSN format anotated by the >>[...] syntax
+
+if a stack gets overidden we compare the counts from each stack
+if the orignal reference count is larger than the overide stack's count then the remaining
+elements from the orignal reference are appended to overide stack
+*/
 
 Class(Stack,
 __INIT(u64 init_size; u64 type_size; DSN_fieldType dsn_type; void* literal;),
@@ -134,27 +329,87 @@ __FIELD(),
 	errvt method(Stack,Push,, void* item, u64 num);
 	errvt method(Stack,Pop,, void* out, u64 num);
 	void* method(Stack,FreeToPointer);
-	u64 method(Stack,Count);
-	bool method(Stack,Check);
+	u64   method(Stack,Count);
+	bool  method(Stack,Check);
 )
 
 /**
  * Extra-C Queue Data Structure
  *-----*/
 
-#define Queue(type) inst(Queue)
-#define newQueue(type, ...) new(Queue,			\
-		sizeof((type[]){__VA_ARGS__}) 		\
-		/ sizeof(type),				\
+/**
+@def Queue(type)
+@brief readability macro for being explicit about what the queue is intended to store
+*/
+#define Queue(type) inst(Queue) 
+/**
+@def newQueue(type, ...)
+@brief allocates a static buffer object on the stack 
+*/
+#define newQueue(type, size) new(Queue, 		\
+		size,					\
 		sizeof(type),	 			\
 		getDSN_Type((type){0}),			\
-		(type[]){__VA_ARGS__})
-#define pushQueue(type, ...) push(Queue,		\
-		sizeof((type[]){__VA_ARGS__}) 		\
-		/ sizeof(type),				\
+		NULL)
+/**
+@def pushQueue(type, size)
+@brief allocates a static buffer object on the stack 
+*/
+#define pushQueue(type, size) push(Queue, 		\
+		size,					\
 		sizeof(type),	 			\
 		getDSN_Type((type){0}),			\
-		(type[]){__VA_ARGS__})
+		NULL)
+/**
+@def l_s(first, ...)
+@brief allocates a list object literal on the stack 
+@details the type is infered using typeof() from the first parameter, then the others are assumed to 
+be of the same type
+*/
+#define l_q(first, ...) push(Queue, sizeof((typeof(first)[]){first, __VA_ARGS__})\
+				 / sizeof(typeof(first)), 			 \
+			   	 sizeof(typeof(first)), 			 \
+				 getDSN_Type((typeof(first)){0}),		 \
+				 (typeof(first)[]){first, __VA_ARGS__}		 \
+			)
+/**
+@def L_Q(first, ...)
+@brief allocates a list object literal on the heap 
+@details the type is infered using typeof() from the first parameter, then the others are assumed to 
+be of the same type
+*/
+#define L_Q(first, ...) new(Queue, sizeof((typeof(first)[]){first, __VA_ARGS__})\
+				 / sizeof(typeof(first)), 			\
+			   	 sizeof(typeof(first)), 			\
+				 getDSN_Type((typeof(first)){0}),		\
+				 (typeof(first)[]){first, __VA_ARGS__}		\
+			)
+
+
+/**
+@class Queue
+@implements Formatter
+@implements IterableList
+@brief a dynamic queue of any type of arbitrary size
+@details This class represents a dynamic queue which can be 
+used wherever an unknown amount of items must be put into a queue
+
+
+@subsection Constructor
+@brief Initializes a Buffer object
+@param init_size	the initial number of elements in the list
+@param type_size	the size of a single element in the list
+@param dsn_type 	the dsn_type of the element's type, this is used for DSN formating
+@param literal		a pointer to an array of the same size, this data will be copied into the internal buffer
+
+
+@subsection DSN
+@details This is one of the basic data type in the DSN format anotated by the <<[...] syntax
+
+if a queue gets overidden we compare the counts from each queue
+if the orignal reference count is larger than the overide queue's count then the remaining
+elements from the orignal reference are appended to overide queue
+*/
 Class(Queue,
 __INIT(u64 init_size; u64 type_size; DSN_fieldType dsn_type; void* literal;),
 __FIELD(),
@@ -169,8 +424,8 @@ __FIELD(),
 	errvt method(Queue,Reserve,, bool exact, u64 amount);
 	errvt method(Queue,Enqueue,, void* item, u64 num);
 	errvt method(Queue,Dequeue,, void* out, u64 num);
-	u64 method(Queue,Count);
-	bool method(Queue,Check);
+	u64   method(Queue,Count);
+	bool  method(Queue,Check);
 );
 
 /**
@@ -299,7 +554,7 @@ __INIT(cstr name; inst(String) source; List(entry(String,DSN)) imports),
 __FIELD(inst(String) name; inst(Struct) body),
 	
  	interface(Formatter);
-
+	
       	errvt 		method(DSN, addImport,,   cstr name, inst(DSN) import_data);
 	DSN_data*	method(DSN, searchField,, inst(String) name);
 	u64		method(DSN, parseField,,  DSN_data* ds, inst(String) in);
@@ -325,3 +580,4 @@ __FIELD(inst(String) name; inst(Struct) body),
 	u64 	method(DSN, formatString,, inst(String) data,	inst(StringBuilder) out);
 	u64 	method(DSN, formatNumber,, inst(Number) data,	inst(StringBuilder) out);
 )
+

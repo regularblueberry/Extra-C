@@ -17,7 +17,7 @@ Type(regex_instruc,
 
 List(regex_instruc) parseRegex(inst(String) regex){
 	
-	List(regex_instruc) instrucs_list = pushList(regex_instruc);
+	List(regex_instruc) instrucs_list = pushList(regex_instruc, 10);
 	data(regex_instruc) curr_instruc;
 	u32 regex_cusor = 0;
 	while(regex_cusor < regex->len){

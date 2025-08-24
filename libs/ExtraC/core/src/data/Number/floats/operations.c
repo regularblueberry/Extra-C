@@ -121,8 +121,8 @@ errvt methodimpl(Number, FloatDivide,, inst(Number) other, inst(Number) remainde
 	}
 	u32* resbuff = List.GetPointer(rpriv->digits, 0);
 	Number_Private 
-		* tempRemainder = makeTempNum(pushList(u32), precision), 
-		* tempProduct	= makeTempNum(pushList(u32), precision);
+		* tempRemainder = makeTempNum(pushList(u32, 10), precision), 
+		* tempProduct	= makeTempNum(pushList(u32, 10), precision);
 	
 	rpriv->exponent = priv->exponent - opriv->exponent;
 

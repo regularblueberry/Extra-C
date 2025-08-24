@@ -261,7 +261,7 @@ construct(Number,
 	.__DESTROY = Number_Destroy 
 ){
 	setpriv(Number){
-		.digits = newList(u64)
+		.digits = newList(u64, 10)
 	};
 	List.Append(priv->digits, &(u64){0}, 1);
 

@@ -17,7 +17,7 @@ NEW_TEST("List Data Structure"){
 	List(c8) sublist = NULL;
 
 	NEW_SUBTEST("Initialization"){
-		test_list = pushList(c8);
+		test_list = pushList(c8, 10);
 		if(isinit(test_list))
 			PASS_TEST
 		else{ 

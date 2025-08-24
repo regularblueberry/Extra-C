@@ -132,8 +132,8 @@ errvt methodimpl(Number, IntDivide,, inst(Number) other, inst(Number) remainder,
 	u32* resbuff = List.GetPointer(rpriv->digits, 0);
 	
 	Number_Private 
-		* tempRemainder = makeTempNum(pushList(u32), precision), 
-		* tempProduct	= makeTempNum(pushList(u32),   precision);
+		* tempRemainder = makeTempNum(pushList(u32, 10), precision), 
+		* tempProduct	= makeTempNum(pushList(u32, 10),   precision);
 	
 	for (int i = a_size - 1; i >= 0; i--) {
 		// Shift the current remainder left by BIGINT_BASE and add the next digit from the dividend

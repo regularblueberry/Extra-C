@@ -32,11 +32,11 @@ u64 methodimpl(Number, IntPrintDeci,, inst(StringBuilder) out) {
 	const int CHUNK_SIZE = 9;
 	u64 formatted_len = 0;
 
-	inst(List) temp_list = pushList(u32);
+	inst(List) temp_list = pushList(u32, 10);
 	Number_Private* temp_num = makeTempNum(temp_list, priv->precision);
 	Number_Copy(temp_num, priv);
 	
-	List(u32) digit_chunks = pushList(u32);
+	List(u32) digit_chunks = pushList(u32, 10);
 	
 	while(temp_num->sign != 0) {
 		u32 remainder = Number_divide_smallInt(temp_num, POWER_OF_10);

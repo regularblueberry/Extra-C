@@ -111,7 +111,7 @@ construct(Arena,
 
 	setpriv(Arena){
 		.max_size = UINT64_MAX,
-		.arena_buffers = newList(inst(Buffer)),
+		.arena_buffers = newList(inst(Buffer), 10),
 		.alloc_size = args.init_size,
 		.current_size = 0
 	};

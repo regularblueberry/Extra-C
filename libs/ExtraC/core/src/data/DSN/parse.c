@@ -138,7 +138,7 @@ u64 methodimpl(DSN, parseMap,, inst(Map)* data, inst(String) in){
 	DSN_fieldType first_types[2] = {0};
 	DSN_data key = {0}, value = {0};
 	data_entry currbucket = {0};
-	List(data_entry) buckets = pushList(data_entry);
+	List(data_entry) buckets = pushList(data_entry, 10);
 	
 	while(isblank(in->txt[scanned_len])) scanned_len++;
 
@@ -245,7 +245,7 @@ u64 methodimpl(DSN, parseStruct,, inst(Struct)* data, inst(String) in){
 
 	scanned_len++;
 
-	Stack(Struct) parent_structs = pushStack(inst(Struct));
+	Stack(Struct) parent_structs = pushStack(inst(Struct), 10);
 
 	DSN_data field = {0};
 
