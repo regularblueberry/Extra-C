@@ -84,6 +84,12 @@ be of the same type
 	     	)
 
 
+	#define pushBufferView(type, len, pntr) \
+			Buffer.fromView(alloca(sizeof(Buffer) + sizeof_Buffer_Private), pntr, sizeof(type), len)
+
+	#define newBufferView(type, len, pntr) \
+			Buffer.fromView(malloc(sizeof(Buffer) + sizeof_Buffer_Private), pntr, sizeof(type), len)
+
 /**
 @class Buffer
 @implements Allocator
@@ -140,11 +146,20 @@ __FIELD(),
 */
       	errvt method(Buffer, resize,, u64 num);
 /**
-@brief reallocates the buffer to a specified size
-@param num the number of items to resize the buffer to
+@brief casts the buffer's type to  another size
+@param type_size the size of the new type
 @return ERR_NONE if 
 */
       	errvt method(Buffer, cast,, u64 type_size);
+
+/**
+@brief create a buffer view from a pointer
+@param start the pointer to start of the data
+@param type_size the size of the buffer view's type
+@param len the number of items in the buffer view
+@return ERR_NONE if 
+*/
+      	inst(Buffer) method(Buffer, fromView,, void* start, u64 type_size, u64 len);
 )
 
 /**
