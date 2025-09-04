@@ -32,7 +32,7 @@ noFail Error_Hide(){
 extern inst(Logger) error_logger;
 
 errvt Error_SetLogger(inst(Logger) logger){
-	nonull(logger, return nullerr);
+	nonull(logger, return err);
 	error_logger = logger;
 return OK;
 }

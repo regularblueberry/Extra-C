@@ -202,7 +202,7 @@ numEquality methodimpl(Number, Compare,, inst(Number) other) {
 }
 
 bool   methodimpl(Number, isFloat){nonull(self, return -1); return priv->floating;}
-errvt  methodimpl(Number, zeroOut){nonull(self, return nullerr); Number_setZero(priv); return OK;}
+errvt  methodimpl(Number, zeroOut){nonull(self, return err); Number_setZero(priv); return OK;}
 
 
 float methodimpl(Number, castToFloat){

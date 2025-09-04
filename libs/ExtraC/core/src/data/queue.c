@@ -57,7 +57,7 @@ return OK;
 }
 
 errvt methodimpl(Queue, Enqueue,, void* item, u64 num){
-	nonull(self, return nullerr);
+	nonull(self, return err);
 	
 	u64 queue_allocsize = get_slot_dist(priv->start, priv->end);
 
@@ -78,7 +78,7 @@ errvt methodimpl(Queue, Enqueue,, void* item, u64 num){
 return OK;
 }
 errvt methodimpl(Queue, Dequeue,, void* out, u64 num){
-	nonull(self, return nullerr);
+	nonull(self, return err);
 
 	if(num > priv->items)
 		return ERR(DATAERR_OUTOFRANGE, "num exceeds queue");
@@ -110,7 +110,7 @@ return priv->items;
 }
 
 errvt methodimpl(Queue, Index,, bool write, u64 index, void* data){
-	nonull(self, return nullerr);
+	nonull(self, return err);
 
 	if(priv->items <= index) 
 		return ERR(DATAERR_OUTOFRANGE, "index exceeds queue");
@@ -142,7 +142,7 @@ return OK;
 
 errvt methodimpl(Queue, Limit,, u64 limit){
 
-	nonull(self, return nullerr);
+	nonull(self, return err);
 
 	if(limit > priv->items){
 		void* new_buf = calloc(limit, slot_size);
@@ -192,7 +192,7 @@ return priv->to_pointer_buf;
 errvt imethodimpl(Queue,Free){
 	self(Queue)
 
-	nonull(self, return nullerr);
+	nonull(self, return err);
 
 	if(priv->to_pointer_buf != NULL) 
 		free(priv->to_pointer_buf);

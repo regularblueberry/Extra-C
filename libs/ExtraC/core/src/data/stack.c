@@ -4,8 +4,8 @@
 #define MAX_STACK_SIZE UINT32_MAX
 
 errvt methodimpl(Stack,Push,, void* item, u64 num){
-	nonull(self, return nullerr;);
-	nonull(item, return nullerr;);
+	nonull(self, return err;);
+	nonull(item, return err;);
 	
 	if((priv->top + 1) >= priv->allocednum){ 
 		priv->allocednum = (priv->allocednum * 2) + num;
@@ -18,8 +18,8 @@ errvt methodimpl(Stack,Push,, void* item, u64 num){
 return OK;
 }
 errvt methodimpl(Stack,Pop,, void* out, u64 num){
-	nonull(self, return nullerr;);
-	nonull(out, return nullerr;);
+	nonull(self, return err;);
+	nonull(out, return err;);
 	
 	if(0 == priv->top) return ERR(DATAERR_EMPTY, "stack is empty");
 	
@@ -49,7 +49,7 @@ return priv->start;
 }
 
 errvt methodimpl(Stack, Grow,, u64 add_amount){
-	nonull(self, return nullerr);
+	nonull(self, return err);
 	if(priv->allocednum + add_amount > priv->limit){
 		priv->allocednum = priv->limit - priv->allocednum;
 	}else{
@@ -64,7 +64,7 @@ errvt methodimpl(Stack, Grow,, u64 add_amount){
 return OK;
 }
 errvt methodimpl(Stack, Limit,, u64 limit){
-	nonull(self, return nullerr);
+	nonull(self, return err);
 	priv->limit = limit;
 	if(priv->allocednum > priv->limit){
 		priv->allocednum = priv->limit;
@@ -78,7 +78,7 @@ return OK;
 }
 
 errvt methodimpl(Stack, Index,, bool write, u64 index, void* data){
-	nonull(self, return nullerr);
+	nonull(self, return err);
 
 	if(index > priv->top) return ERR(
 		DATAERR_OUTOFRANGE, "index is out of range"
@@ -94,7 +94,7 @@ return OK;
 }
 errvt imethodimpl(Stack, Free){
 	self(Stack)
-	nonull(self, return nullerr;);
+	nonull(self, return err;);
 
 	free(priv->start);
 	;

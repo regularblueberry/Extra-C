@@ -4,13 +4,13 @@
 
 errvt imethodimpl(StringBuilder, Free){
 	self(StringBuilder);
-	nonull(self, return nullerr);
+	nonull(self, return err);
 	del(priv->data);
 return OK;
 }
 
 errvt methodimpl(StringBuilder, Max,, u64 max_len){
-	nonull(self, return nullerr)
+	nonull(self, return err)
 	List.Limit(priv->data, max_len);
 	priv->max_len = max_len;
 return OK;
@@ -100,14 +100,14 @@ return len;
 
 errvt methodimpl(StringBuilder, Replace,, u64 index, inst(String) string){
 
-	nonull(self, return nullerr);
+	nonull(self, return err);
 
 	List.Index(priv->data, LISTINDEX_WRITE, index, string->len, string->txt);
 
 return OK;
 }
 errvt methodimpl(StringBuilder, Clear){
-	nonull(self, return nullerr);
+	nonull(self, return err);
 	List.Flush(priv->data);
 return OK;
 }

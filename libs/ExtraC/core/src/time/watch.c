@@ -16,7 +16,7 @@ inst(Time) methodimpl(TimeWatch, GetLimit){
 
 errvt methodimpl(TimeWatch, Restart){
 	
-	nonull(self, return nullerr);
+	nonull(self, return err);
 	
 	if(TIME_UTC != timespec_get(&priv->start_time, TIME_UTC)) {
 		return ERR(ERR_INVALID, "could not restart time");
@@ -26,7 +26,7 @@ return OK;
 }
 errvt methodimpl(TimeWatch, Start){
 
-	nonull(self, return nullerr);
+	nonull(self, return err);
 
 	if(TIME_UTC != timespec_get(&priv->start_time, TIME_UTC)) 
 		return ERR(ERR_INVALID, "could not get current time");	

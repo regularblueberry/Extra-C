@@ -21,7 +21,7 @@ return OK;
 errvt imethodimpl(Struct, __DESTROY){
 	self(Struct);
 
-	nonull(self, return nullerr);
+	nonull(self, return err);
 
 	List(data_entry) entries = Map.GetEntries(self->fields);
 
@@ -77,8 +77,8 @@ return DSN.formatStruct(NULL, self, out);
 }
 
 errvt methodimpl(Struct, Merge,, inst(Struct) merge_struct){
-	nonull(merge_struct, return nullerr);
-	nonull(self, return nullerr);
+	nonull(merge_struct, return err);
+	nonull(self, return err);
 
 	List(data_entry) entries = Map.GetEntries(merge_struct->fields);
 
@@ -97,8 +97,8 @@ return OK;
 }
 
 errvt methodimpl(Struct, AddField,, cstr name, DSN_data* field){
-	nonull(self, return nullerr;);
-	nonull(field->data, return nullerr;);
+	nonull(self, return err;);
+	nonull(field->data, return err;);
 
 	if(ERR_NONE != Map.Insert(self->fields, str_cast(name, 1024), field)){
 		return ERR(DATAERR_MEMALLOC, "could not add field to datastructs");

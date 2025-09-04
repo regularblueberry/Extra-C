@@ -6,8 +6,8 @@
 
 errvt methodimpl(List, Limit,, u64 limit_size){
 	
-	nonull(self, return nullerr;)
-	nonull(self, return nullerr;)
+	nonull(self, return err;)
+	nonull(self, return err;)
 	
 	priv->limit = limit_size;
 	
@@ -27,7 +27,7 @@ return OK;
 
 errvt methodimpl(List,Grow,, u64 plus_amount){
 
-	nonull(self, return nullerr;)
+	nonull(self, return err;)
 	if(priv->items == priv->limit) return ERR(
 		DATAERR_LIMIT, "limit has been reached for this list");
 	if(priv->items_alloced + plus_amount > priv->limit){
@@ -51,8 +51,8 @@ errvt methodimpl(List, Reserve,, bool exact, u64 amount){
 }
 
 errvt methodimpl(List,Append,, void* in, u64 len){
-	nonull(self, return nullerr;)
-	nonull(in, return nullerr;)
+	nonull(self, return err;)
+	nonull(in, return err;)
 
 	if(priv->items + len > priv->items_alloced)
 #if __DataAutoGrow
@@ -68,7 +68,7 @@ return OK;
 }
 
 errvt methodimpl(List, SetFree,, u64 index){
-	nonull(self, return nullerr);
+	nonull(self, return err);
 
 	if(priv->free_slots_buff == NULL){
 		priv->free_slots_buff = calloc(10, sizeof(u64));
@@ -84,7 +84,7 @@ errvt methodimpl(List, SetFree,, u64 index){
 return OK;	
 }
 u64 methodimpl(List, FillSlot,, void* in){
-	nonull(self, return nullerr);
+	nonull(self, return err);
 	u64 index = UINT64_MAX;
 
 	if(priv->free_slots_buff == NULL || priv->free_slots_buff_size == 0){
@@ -100,7 +100,7 @@ return index;
 
 errvt methodimpl(List,Insert,, u64 len, u64 index, void* in){
 
-	nonull(self, return nullerr;)
+	nonull(self, return err;)
 
 	index = index == UINT64_MAX ? priv->items : index;	
 	
@@ -149,8 +149,8 @@ errvt methodimpl(List,Merge,, inst(List) merged_list, u64 index){
 
     // Error checking
 	
-	nonull(self, return nullerr;)
-	nonull(merged_list, return nullerr;)
+	nonull(self, return err;)
+	nonull(merged_list, return err;)
 
 	if(mergpriv->item_size != priv->item_size) return ERR(
 		DATAERR_SIZETOOLARGE , "different item sizes");
@@ -185,8 +185,8 @@ return out_list;
 }
 errvt methodimpl(List,Index,, bool write, u64 index, u64 len, void* data){
 	
-	nonull(self, return nullerr;)
-	nonull(data, return nullerr;)
+	nonull(self, return err;)
+	nonull(data, return err;)
 		
 	if(index + len > priv->items_alloced) ERR(
 	 	DATAERR_OUTOFRANGE, "index out of range");
@@ -217,7 +217,7 @@ void* methodimpl(List,GetPointer,,u64 index){
 }
 
 errvt methodimpl(List,Cast,, DSN_fieldType new_type, u64 new_type_size){
-	nonull(self, return nullerr)
+	nonull(self, return err)
 	
 	priv->items = (priv->items * priv->item_size) / new_type_size; 
 	priv->limit = (priv->limit * priv->item_size) / new_type_size; 
@@ -246,7 +246,7 @@ void methodimpl(List,Pop,, u32 num){
 
 errvt imethodimpl(List,Free){
 	self(List)
-	nonull(self, return nullerr;)
+	nonull(self, return err;)
 	
 	if(priv->data != NULL) free(priv->data);
 return OK;

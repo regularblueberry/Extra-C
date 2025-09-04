@@ -1,5 +1,4 @@
 #include "datastructs.h"
-#include "types.h"
 
 
 #if !(STDDATA_MAP_OVERIDEHASH)
@@ -68,9 +67,9 @@ return OK;
 
 u32 methodimpl(Map,Insert,, void* key_data, void* itemptr){
 	
-	nonull(self, return INVALID_MAPINDEX);
+	nonull(self,     return INVALID_MAPINDEX);
 	nonull(key_data, return INVALID_MAPINDEX);
-	nonull(itemptr, return INVALID_MAPINDEX);
+	nonull(itemptr,  return INVALID_MAPINDEX);
 	
 	
 	u64 place = 10;
@@ -189,7 +188,7 @@ void* methodimpl(Map,Index,, u32 key){
 return buckets[key].data;
 }
 errvt methodimpl(Map, Remove,, void* key){
-	nonull(self, return nullerr)
+	nonull(self, return err)
 	
 	u32 mindex = Map.SearchIndex(self, key);
 
@@ -216,7 +215,7 @@ return priv->buckets;
 }
 errvt imethodimpl(Map,Free){
 	self(Map);
-	nonull(self, return nullerr;);
+	nonull(self, return err;);
 	
 	foreach(priv->buckets, data_entry, entry){
 		if(entry.data != NULL){

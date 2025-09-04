@@ -1,7 +1,7 @@
 #include "../number.h"
 
 errvt methodimpl(Number, SetPrecision,, u64 new_precision) {
-	nonull(self, return nullerr)
+	nonull(self, return err)
 	
 	priv->precision = new_precision;
 	

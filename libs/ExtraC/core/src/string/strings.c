@@ -24,7 +24,7 @@ return res;
 errvt imethodimpl(String,Free){
 	self(String);
 	
-	nonull(self->txt, return nullerr;);
+	nonull(self->txt, return err;);
 	
 	if(!priv->inline_alloc)
 		free(self->txt);

@@ -1,7 +1,7 @@
 #include "./error.h"
 
 static errvt imethodimpl(STD_LOG, Log,, inst(String) text){
-	nonull(text, return nullerr);
+	nonull(text, return err);
 	fprintf(stderr, "%s", text->txt);
 return OK;
 }
@@ -40,8 +40,8 @@ static const data(Logger) std_logger = {
 inst(Logger) error_logger = (inst(Logger))&std_logger;
 
 errvt methodimpl(Logger, Log,, LogType type, inst(String) text){
-	nonull(self, return nullerr);
-	nonull(text, return nullerr);
+	nonull(self, return err);
+	nonull(text, return err);
 	
 	inst(StringBuilder) textbldr = push(StringBuilder, NULL, UINT64_MAX);
 
@@ -66,7 +66,7 @@ return ERR(ERR_INVALID, "error unreachable code");
 }
 
 errvt methodimpl(Logger, LogWithFormat,, LogType type, ...){
-	nonull(self, return nullerr);
+	nonull(self, return err);
 
 	va_list args;
 	u64 formatted_len = 0;
@@ -105,7 +105,7 @@ return formatted_len;
 
 errvt imethodimpl(Logger, Destroy){
 	self(Logger);
-	nonull(self, return nullerr);
+	nonull(self, return err);
 
 	del(priv->name);
 return OK;

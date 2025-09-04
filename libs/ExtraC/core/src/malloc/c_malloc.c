@@ -92,7 +92,7 @@ return &res[1];
 }
 
 errvt imethodimpl(CMalloc, Delete,, void* data, void* ex_args){
-	nonull(data, return nullerr;)
+	nonull(data, return err;)
 	
 	self(CMalloc);
 

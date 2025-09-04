@@ -226,8 +226,8 @@ return OK;
 
 static errvt Number_Copy(Number_Private* dest, Number_Private* src) {
 
-	nonull(dest, return nullerr);
-	nonull(src,  return nullerr);
+	nonull(dest, return err);
+	nonull(src,  return err);
 
 	dest->digits = List.SubList(src->digits, 0, UINT64_MAX);
 	dest->sign = src->sign;
