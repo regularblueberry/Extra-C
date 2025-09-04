@@ -148,7 +148,7 @@ return ent_count;
 
 errvt methodimpl(Dir, Copy,, inst(Dir)* new_dir, fsPath path){
 	
-	nonull(self, return nullerr;)	
+	nonull(self, return err;)	
 	
 	if(*new_dir != NULL)
 		return ERR(IOERR_ALRDYEXST, "new dir instance already in use");
@@ -160,7 +160,7 @@ errvt methodimpl(Dir, Copy,, inst(Dir)* new_dir, fsPath path){
 	i64 entries_read = 0;
 	fsEntry temp_entries_store[10] = {0};
 	Stack(Inst(Dir)) nested_dirs = pushStack(inst(Dir));
-	List(fsEntry) entries_list = pushList(dir_entry);
+	List(fsEntry) entries_list = pushList(dir_entry, 10);
 	
 	Stack.Push(nested_dirs, &self, 1);
 	do{
@@ -208,7 +208,7 @@ return OK;
 }
 
 errvt methodimpl(Dir, Move,, fsPath path){
-	nonull(self, return nullerr);
+	nonull(self, return err);
 	inst(Dir) new_dir = NULL;
 	Dir.Copy(self, &new_dir, path);
 	rmdir(priv->path);
@@ -225,7 +225,7 @@ return OK;
 errvt imethodimpl(Dir, Close){
 	self(Dir)
 
-	nonull(self, return nullerr)	
+	nonull(self, return err)	
 	closedir(priv->dir);
 
 return OK;
@@ -233,7 +233,7 @@ return OK;
 
 errvt methodimpl(Dir, Remove){
 
-	nonull(self, return nullerr;)	
+	nonull(self, return err;)	
 	rmdir(priv->path);
 
 return OK;

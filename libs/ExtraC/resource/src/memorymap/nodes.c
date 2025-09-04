@@ -119,8 +119,8 @@ errvt methodimpl(MemoryMap, GetNode,, memid token, mmnode_info* metadata){
 	
 	mmnode* node = NULL;
 
-	nonull(self, return nullerr);
-	nonull(metadata, return nullerr;);
+	nonull(self, return err);
+	nonull(metadata, return err;);
 
 	if(MemoryMap.validateMemID(self, token))
 		return ERR(RESOURCERR_TOKENINDEX, "invalid memid");
@@ -142,7 +142,7 @@ memid methodimpl(MemoryMap, AddNode,, memid maptotoken, mmprot_info* metadata){
 
 	mmnode* maptonode = NULL, * node = NULL;
 
-	nonull(self, return nullerr);
+	nonull(self, return err);
 
 	if(MemoryMap.validateMemID(self, maptotoken)) return ERR(
 		RESOURCERR_TOKENINDEX, "invalid memid");
@@ -171,7 +171,7 @@ memid methodimpl(MemoryMap, AddNode,, memid maptotoken, mmprot_info* metadata){
 
 	*node = (mmnode){
 		.protections = metadata->protections,
-		.contents = newList(mmleaf*),
+		.contents = newList(mmleaf*, 10),
 		.token = *(memiddef*)result,
 		.childrennum = 0,
 		.firstchild = NULL,

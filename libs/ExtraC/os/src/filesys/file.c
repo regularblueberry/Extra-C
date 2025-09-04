@@ -174,8 +174,8 @@ return OK;
 }
 errvt methodimpl(File, Move,, fsPath path){
 
-	nonull(self, return nullerr)
-	nonull(path, return nullerr)
+	nonull(self, return err)
+	nonull(path, return err)
 
 	errvt error  = ERR_NONE;
 	inst(File) new_file = NULL;
@@ -197,14 +197,14 @@ return OK;
 errvt imethodimpl(File, Close){
 	self(File)
 
-	nonull(self, return nullerr);	
+	nonull(self, return err);	
 	close(priv->fd);
 
 return OK;
 }
 errvt methodimpl(File, Remove){
 	
-	nonull(self, return nullerr)
+	nonull(self, return err)
 	close(priv->fd);
 	remove(priv->path);
 return OK;

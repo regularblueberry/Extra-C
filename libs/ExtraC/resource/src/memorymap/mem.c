@@ -13,7 +13,7 @@ bool methodimpl(MemoryMap, validateMemID,, memid id){
 
 errvt methodimpl(MemoryMap, registerAllocator,, intf(Allocator) interface, void* allocator){
 	
-	nonull(allocator, return nullerr)
+	nonull(allocator, return err)
 
 	List.Append(priv->allocators, &(mmalloc){
 		.alloc_interface = interface,
@@ -41,8 +41,8 @@ __PRIVATE(
 	.maxvalidtoken = (memiddef){0},
 	.nodes = new(Pool, sizeof(mmnode), 10),  
 	.leafs = new(Pool, sizeof(mmleaf), 10),
-	.active_nodes = newList(mmnode*),
-	.allocators = newList(mmalloc)
+	.active_nodes = newList(mmnode*, 10),
+	.allocators = newList(mmalloc, 10)
 ),
 	if(priv->nodes == NULL)
 	    	{ERR(ERR_INITFAIL, "failed to create node pool"); break;}

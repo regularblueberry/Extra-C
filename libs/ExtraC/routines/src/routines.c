@@ -36,7 +36,7 @@ extern void getSubRoutineContext(SubRoutineContext* context_ptr);
 
 errvt methodimpl(SubRoutine, InitHere,, size_t size_of_args, void* args_start){
 
-	nonull(self, return nullerr);
+	nonull(self, return err);
 	nonull(args_start);
 
 

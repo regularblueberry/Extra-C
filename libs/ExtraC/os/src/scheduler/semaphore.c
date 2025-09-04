@@ -3,13 +3,13 @@
 #include "./posix.h"
 
 errvt methodimpl(Semaphore, Wait){
-	nonull(priv, return nullerr;);
+	nonull(priv, return err;);
 	sem_wait(&priv->semaphore);
 
 return OK;
 }
 errvt methodimpl(Semaphore, TryWait){
-	nonull(priv, return nullerr;);
+	nonull(priv, return err;);
 	if(sem_trywait(&priv->semaphore) != 0){
 		if(errno == EAGAIN)
 		return THREADERR_SEM_FULL;
@@ -21,14 +21,14 @@ errvt methodimpl(Semaphore, TryWait){
 return OK;
 }
 errvt methodimpl(Semaphore, Post){
-	nonull(priv, return nullerr;);
+	nonull(priv, return err;);
 	sem_post(&priv->semaphore);
 
 return OK;
 }
 errvt imethodimpl(Semaphore, Destroy){
 	self(Semaphore)
-	nonull(priv, return nullerr;);
+	nonull(priv, return err;);
 	sem_destroy(&priv->semaphore);
 	;
 

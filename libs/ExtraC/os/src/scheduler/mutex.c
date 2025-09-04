@@ -5,7 +5,7 @@
 
 
 errvt methodimpl(Mutex, Lock){
-	nonull(self, return nullerr);
+	nonull(self, return err);
 
 	if(pthread_mutex_lock(&priv->mutex) != 0){
 		if(EINVAL == errno) 
@@ -21,7 +21,7 @@ errvt methodimpl(Mutex, Lock){
 return OK;
 }
 errvt methodimpl(Mutex, TryLock){
-	nonull(self, return nullerr);
+	nonull(self, return err);
 	
 	if(pthread_mutex_trylock(&priv->mutex) != 0){
 		if(EINVAL == errno) 
@@ -36,7 +36,7 @@ errvt methodimpl(Mutex, TryLock){
 return OK;
 }
 errvt methodimpl(Mutex, UnLock){
-	nonull(self, return nullerr);
+	nonull(self, return err);
 	
 	if(pthread_mutex_unlock(&priv->mutex) != 0){
 		if(EINVAL == errno) 
@@ -54,7 +54,7 @@ return OK;
 errvt imethodimpl(Mutex, Destroy){
 	self(Mutex)
 
-	nonull(self, return nullerr);
+	nonull(self, return err);
 	
 	pthread_mutex_destroy(&priv->mutex);
 	;

@@ -9,7 +9,7 @@ inst(Error) methodimpl(Thread,GetErr){
 	return priv->errdata;
 }
 errvt methodimpl(Thread,GetExitCode,, int* result){
-	nonull(self, return nullerr);
+	nonull(self, return err);
 	nonull(result);
 
 	if(priv->is_active) return ERR(
@@ -56,18 +56,18 @@ thread->__private->is_active = false;
 return NULL;
 }
 errvt methodimpl(Thread,SetFunc,, int(*func)(inst(Thread) thread, void* args)){
-	nonull(self, return nullerr);
+	nonull(self, return err);
 	nonull(func);
 
 	priv->start_func = func;
 return OK;
 }
 errvt methodimpl(Thread,Start,, void* args){
-	nonull(self, return nullerr);
+	nonull(self, return err);
 	if(NULL == priv->start_func) return ERR(
 		THREADERR_DESTROY, "thread has been destroyed or is invalid");
 
-	List(void*) arg = pushList(void*);
+	List(void*) arg = pushList(void*, 1);
 	List.Append(arg, &self, 1);
 	List.Append(arg, &args, 1);
 	pthread_create(&priv->thread, NULL, __all_threads_start_here__, List.FreeToPointer(arg));
@@ -75,14 +75,14 @@ errvt methodimpl(Thread,Start,, void* args){
 return OK;
 };
 errvt methodimpl(Thread,Join){
-	nonull(self, return nullerr);
+	nonull(self, return err);
 	if(priv->is_active == false) 
 		return THREADERR_RUNNING;
 	pthread_join(priv->thread, NULL);
 return OK;
 };
 errvt methodimpl(Thread,Exit,,int exitcode){
-	nonull(self, return nullerr);
+	nonull(self, return err);
 	Thread.GetCurrent()->__private->exit_code = exitcode;
 	pthread_exit(NULL);
 return OK;
@@ -94,7 +94,7 @@ void Thread_Sleep(u64 milliseconds){
 }
 errvt imethodimpl(Thread, Destroy){
 	self(Thread);
-	nonull(self, return nullerr);
+	nonull(self, return err);
 	
 	if(priv->is_active) return ERR( 
 		THREADERR_DESTROY, "the thread must be exited before its data can be destroyed");

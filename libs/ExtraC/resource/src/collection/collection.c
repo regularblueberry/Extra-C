@@ -18,7 +18,7 @@ __METHODS(
 ),
 	*priv = (Collection_Private){
 		.map = args.memMap,
-		.resources = newList(memid)
+		.resources = newList(memid, 10)
 	};
 
 	if(args.memMap == NULL)
