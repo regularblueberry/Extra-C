@@ -1,3 +1,4 @@
+#pragma once
 #define Time 	_X11_Time
 #define Display _X11_Display
 #define Connection _X11_Connection
@@ -10,7 +11,7 @@
 #undef Display
 #undef Connection
 
-#include "../systems/__systems.h"
+#include "__backends.h"
 
 typedef struct {
 	u8 active : 1, init : 1;
@@ -25,24 +26,6 @@ static struct{
 	List(graphicsDevice) devices;
 }X11_EnvData;
 
-static inline inst(String) getX11Property(struct _XDisplay* display, RROutput output, Atom property){
-	char* prop;
-	int format;
-	u64 nitems, bytes_after;
-	Atom actual_type;
-	inst(String) result = NULL;
-	
-	if (XRRGetOutputProperty(display, output, property, 0, 100, False, False, AnyPropertyType,
-	                         &actual_type, &format, &nitems, &bytes_after, (unsigned char**)&prop) == Success) {
-	    if (nitems > 0) {
-	        result = new(String, prop, UINT64_MAX);
-	    }
-	    XFree(prop);
-	}
-
-return result;
-}
-
 static inline VideoMode* getSupportedModes(
 	arry(XRRModeInfo) modes, 
 	size_t len, 
@@ -50,7 +33,7 @@ static inline VideoMode* getSupportedModes(
 	u32* currentModeResult
 ){
 	
-	inst modesList = pushList(VideoMode);
+	inst modesList = pushList(VideoMode, 10);
 	i32 currentModeIndex = -1;
 
 	loop(j, len){
@@ -72,11 +55,52 @@ static inline VideoMode* getSupportedModes(
 return List.GetPointer(modesList, 0);
 }
 
-List(graphicsDevice) getGraphicsDeviceList(){
-	
-	inst screens = pushList(graphicsDevice);
+static inline errvt createMonitorKey(struct _XDisplay* display, RROutput output, inst(StringBuilder) keyBuilder){
 
-      	u32 screensNum = XScreenCount(X11_EnvData.display);
+	Atom edid_atom = XInternAtom(display, "EDID", False);
+	if (edid_atom == None) 
+		return ERR(ERR_FAIL, "could get x11 atom for EDID");
+	
+		
+	u8* prop_data = NULL;
+	int format;
+	unsigned long nitems, bytes_after;
+	Atom actual_type;
+	
+	if (XRRGetOutputProperty(
+		display, 
+		output, 
+		edid_atom, 
+		0, sizeof(EDID_Info), 
+		False, False, AnyPropertyType,
+		&actual_type, &format, &nitems,
+		&bytes_after, &prop_data
+	) != Success) 
+		return ERR(ERR_FAIL, "couldnt get edid propetry data");
+	
+	
+	EDID_Info* edid_data = (EDID_Info*)prop_data;
+	
+	if(*(u64*)edid_data->header == *(u64*)(u8[]){0x00,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x00})
+		return ERR(ERR_INVALID, "invalid edid format");
+	
+
+	StringBuilder.Set(keyBuilder, NULL, 
+		   $(edid_data->manufacturer_id), "_",
+		   $(edid_data->product_id_code), "_",
+		   $(edid_data->serial_number)
+	);
+
+        XFree(prop_data);
+return OK;
+}
+
+
+static List(graphicsDevice) getGraphicsDeviceList(){
+	
+	inst keyBuilder = push(StringBuilder);
+
+      	u32 screensNum = XScreenCount(X11_EnvData.display), registered = 0;
 	loop(s, screensNum){
 	    Window screenRoot = RootWindow(X11_EnvData.display, s);
 	    XRRScreenResources* screensSrcs = XRRGetScreenResources(
@@ -87,100 +111,121 @@ List(graphicsDevice) getGraphicsDeviceList(){
 	    if(!screensSrcs) continue;
 
 	    loop(i, screensSrcs->noutput){
+		
 		XRROutputInfo* out = XRRGetOutputInfo(
 			X11_EnvData.display,
 			screensSrcs, 
 			screensSrcs->outputs[i]);
 
-		if(out && out->connection == RR_Connected){
-			graphicsDevice device = {0};
-			XRRCrtcInfo* crt = XRRGetCrtcInfo(
-				X11_EnvData.display, 
-				screensSrcs,
-				out->crtc);			
+		if(!out || out->connection != RR_Connected)
+			continue;
 		
-			device.name = new(String, out->name, out->nameLen);
-			device.uniqueID = (pntr)(u64)s;
+		iferr(createMonitorKey(
+			X11_EnvData.display, 
+			screensSrcs->outputs[i], 
+			keyBuilder
+		     )
+		)
+		{ continue; }
 		
-			if(!device.model){
-				device.model = getX11Property(
-					X11_EnvData.display,
-					screensSrcs->outputs[i],
-					XInternAtom(X11_EnvData.display, "EDID_PRODUCT_ID", False)
-				);
-			}
-			if(!device.manufacturer){
-				device.model = getX11Property(
-					X11_EnvData.display,
-					screensSrcs->outputs[i],
-					XInternAtom(X11_EnvData.display, "EDID_VERSION", False)
-				);
-			}
-			if(!device.supportedModes){
-				u32 currentMode = 0;
-				device.supportedModes = getSupportedModes(
-					screensSrcs->modes, 
-					screensSrcs->nmode,
-					crt, &device.currentMode
-				);
-			}
+		data(String) key = StringBuilder.GetStr(keyBuilder);
+		Device_ID envDevID = OSDeviceManager.findDevice(OSDevices, &key);
 
-			if(!device.info.display.bitDepth){
-				XWindowAttributes attrbs;
-				XGetWindowAttributes(
-					X11_EnvData.display, 
-					screenRoot, 
-					&attrbs
-				);
-				device.info.display.bitDepth = (u16)attrbs.depth;
-			}
-			if(!device.info.display.dpi && out->mm_width > 0) {
-				const float mm_to_inch_mult_factor = 25.4f;
-				device.info.display.dpi = (u16)
-					round((out->mm_width * mm_to_inch_mult_factor)
-			    			/ out->mm_width
-	   			);
-			}
-			device.info.display.rotation = crt->rotation & RR_Rotate_90  ? 90  :
-    					  crt->rotation & RR_Rotate_180 ? 180 :
-    					  crt->rotation & RR_Rotate_270 ? 270 :
-    					  0;
-			device.info.display.primary = screensSrcs->outputs[i] == 
-					XRRGetOutputPrimary(
-						X11_EnvData.display, 
-						screenRoot
-					);
-
-			List.Append(screens, &device, 1);
-			XRRFreeOutputInfo(out);
-			XRRFreeCrtcInfo(crt);
+		if(envDevID == DEVICE_ID_NULL){
+			logerr("failed to find env device for ", $(out->name));
+			continue;
 		}
+		
+		EnvDevice_Video_Data* envData = OSDeviceManager.getEnvDevice(OSDevices, envDevID);
+
+		if(!envData){
+			logerr("failed to find env device for ", $(out->name));
+			continue;
+		}
+
+		graphicsDevice device = {
+			.manufacturer 	= String.Copy(envData->vendorName),
+			.model 		= String.Copy(envData->productName),
+			.name 		= String.Copy(envData->name),
+			.direction = VIDEO_OUT
+		};
+
+		XRRCrtcInfo* crt = XRRGetCrtcInfo(
+			X11_EnvData.display, 
+			screensSrcs,
+			out->crtc
+		);			
+
+		u32 currentMode = 0;
+		device.supportedModes = getSupportedModes(
+			screensSrcs->modes, 
+			screensSrcs->nmode,
+			crt, &device.currentMode
+		);
+
+		XWindowAttributes attrbs;
+		XGetWindowAttributes(
+			X11_EnvData.display, 
+			screenRoot, 
+			&attrbs
+		);
+		device.info.display.bitDepth = (u16)attrbs.depth;
+
+
+		if(!device.info.display.dpi && out->mm_width > 0) {
+			const float mm_to_inch_mult_factor = 25.4f;
+			device.info.display.dpi = (u16)
+				round((out->mm_width * mm_to_inch_mult_factor)
+		    			/ out->mm_width
+	   		);
+		}
+		device.info.display.rotation = crt->rotation & RR_Rotate_90  ? 90  :
+    				  crt->rotation & RR_Rotate_180 ? 180 :
+    				  crt->rotation & RR_Rotate_270 ? 270 :
+    				  0;
+		device.info.display.primary = screensSrcs->outputs[i] == 
+				XRRGetOutputPrimary(
+					X11_EnvData.display, 
+					screenRoot
+				);
+		iferr(OSDeviceManager.registerOSDevice(OSDevices,
+			EnvDevice_Video, envDevID,
+			OSDevice_Graphics, &device,
+			b(
+				OSresource(&String, device.name),
+				OSresource(&String, device.model),
+				OSresource(&String, device.manufacturer),
+				OSresource(OSPointer, device.supportedModes)
+			)
+		    )
+		){
+			del(device.name);
+			del(device.model);
+			del(device.manufacturer);
+			free(device.supportedModes);
+		}
+		registered++;
+
+		XRRFreeOutputInfo(out);
+		XRRFreeCrtcInfo(crt);
+		
 	    }
 	    XRRFreeScreenResources(screensSrcs);
       	}
 
-	arry(graphicsDevice) devices = List.GetPointer(screens, 0);
-	
-	iferr(OSDeviceManager.registerDevices(
-		OSDevices, 
-		OSDevice_Graphics, 
-		List.Size(screens), 
-		devices
-	))
-	{ pop(screens); return NULL; };
-	
-	pop(screens);
-	inst(List) result = OSDeviceManager.getDevices(OSDevices, OSDevice_Graphics);
-	
-	if(!result){
+	pop(keyBuilder);
+
+	inst result = pushList(graphicsDevice, registered + 1);
+
+	iferr(OSDeviceManager.getOSDevices(OSDevices, OSDevice_Graphics, result)){
 		ERR(ERR_FAIL, "failed to properly get graphic devices from device manager");
 		return NULL;
 	}
-
+	
 return result;
 }
 
-errvt vmethodimpl(LinuxEnv_Graphics, initSystem){
+errvt vmethodimpl(LinuxGraphics, initDisplaySystem){
 	if(X11_EnvData.init)
 		return ERR(ERR_INITFAIL, "X11 already initialized");
 	
@@ -195,9 +240,12 @@ errvt vmethodimpl(LinuxEnv_Graphics, initSystem){
 		XCloseDisplay(X11_EnvData.display);
 		return ERR(ERR_INITFAIL, "No root window found");
 	}
-	X11_EnvData.windows = newList(X11_Window, 
-		(X11_Window){.window = root, .active = true, .init = true}
-	);
+	X11_EnvData.windows = newList(X11_Window, 10);
+	
+	List.Append(X11_EnvData.windows,
+		&(X11_Window){.window = root, .active = true, .init = true},
+	1);
+
 
 	X11_EnvData.devices = getGraphicsDeviceList();
 
@@ -205,7 +253,7 @@ errvt vmethodimpl(LinuxEnv_Graphics, initSystem){
 
 return OK;
 }
-errvt vmethodimpl(LinuxEnv_Graphics, exitSystem){
+errvt vmethodimpl(LinuxGraphics, exitDisplaySystem){
 	if(!X11_EnvData.init) 
 		return ERR(ERR_FAIL, "display system not initialized");
 
@@ -223,7 +271,7 @@ errvt vmethodimpl(LinuxEnv_Graphics, exitSystem){
 return OK;
 }
 
-graphicsHandle vmethodimpl(LinuxEnv_Graphics, initDisplay, u32 x, u32 y, u32 w, u32 h, graphicsHandle parent){
+graphicsHandle vmethodimpl(LinuxGraphics, initDisplay, u32 x, u32 y, u32 w, u32 h, graphicsHandle parent){
 
 	//if parent == NULL then the 0th X11_Window will be selected which is the root window
 	X11_Window* parentData = List.GetPointer(X11_EnvData.windows, addrasval(parent));
@@ -259,7 +307,7 @@ graphicsHandle vmethodimpl(LinuxEnv_Graphics, initDisplay, u32 x, u32 y, u32 w, 
 return result;
 }
 
-graphicsDevice* vmethodimpl(LinuxEnv_Graphics, enumDevices, u64* num){
+graphicsDevice* vmethodimpl(LinuxGraphics, enumDevices, u64* num){
 	nonull(num, return NULL);
 
 	if(X11_EnvData.devices == NULL){
@@ -275,7 +323,7 @@ graphicsDevice* vmethodimpl(LinuxEnv_Graphics, enumDevices, u64* num){
 return List.GetPointer(X11_EnvData.devices, 0);
 }
 
-graphicsHandle vmethodimpl(LinuxEnv_Graphics, grabDevice, graphicsDevice* device){
+graphicsHandle vmethodimpl(LinuxGraphics, grabDevice, graphicsDevice* device){
 	nonull(device, return NULL);
 	
 	X11_Window deviceWindow = {0};
@@ -293,18 +341,14 @@ graphicsHandle vmethodimpl(LinuxEnv_Graphics, grabDevice, graphicsDevice* device
 return result;
 }
 
-errvt vmethodimpl(LinuxEnv_Graphics, closeDisplay, graphicsHandle handle){
-	nonull(handle, return nullerr);
+errvt vmethodimpl(LinuxGraphics, closeDisplay, graphicsHandle handle){
+	nonull(handle, return err);
 	
 	X11_Window* win = List.GetPointer(X11_EnvData.windows, addrasval(handle));
 	
 	if(!win)
 		return ERR(ERR_INVALID, "invalid display handle");
 	
-	if(win->active){
-		//close the window
-	}
-
 	win->init = false;
 
 	XDestroyWindow(X11_EnvData.display, win->window);
@@ -314,8 +358,8 @@ errvt vmethodimpl(LinuxEnv_Graphics, closeDisplay, graphicsHandle handle){
 return OK;
 }
 
-bool vmethodimpl(LinuxEnv_Graphics, isDisplayClosed, graphicsHandle handle){
-	nonull(handle, return nullerr);
+bool vmethodimpl(LinuxGraphics, isDisplayClosed, graphicsHandle handle){
+	nonull(handle, return err);
 	
 	X11_Window* win = List.GetPointer(X11_EnvData.windows, addrasval(handle));
 	
