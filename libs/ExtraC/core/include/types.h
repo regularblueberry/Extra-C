@@ -30,12 +30,12 @@
 
 #define register(...) static struct {__VA_ARGS__;}
 #define setports(module) module.ports = (typeof(module.ports))
-#define setup(module, ...) module##_Setup(&module, (module##_SetUpArgs){__VA_ARGS__})
+#define setup(module, ...) module##_Setup(&module, &(module##_SetUpArgs){__VA_ARGS__})
 #define run(module, ...) 						\
-	void module##_Logic(typeof(module)*, module##_Params); 		\
+	void module##_Logic(typeof(module)*, module##_Params*); 		\
 	if(module.ports.ready){ 					\
 	  module.ports.ready = false;					\
-	  module##_Logic(&module, (module##_Params){__VA_ARGS__});	\
+	  module##_Logic(&module, &(module##_Params){__VA_ARGS__});	\
 	  module.ports.ready = true;					\
 	}
 #define inAny(inName)(*self->ports.inName.isReady) ? self->ports.inName.data
