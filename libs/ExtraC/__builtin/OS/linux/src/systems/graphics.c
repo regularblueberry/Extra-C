@@ -89,7 +89,7 @@ return current_index;
 }
 
 errvt initVideoInputSystem(){
-	List(EnvDevice_Video_Data) envDevs = pushList(EnvDevice_Video_Data);
+	List(EnvDevice_Video_Data) envDevs = pushList(EnvDevice_Video_Data, 10);
 
 	iferr(OSDeviceManager.getEnvDevices(OSDevices, EnvDevice_Video, envDevs)){
 		pop(envDevs);
@@ -98,11 +98,13 @@ errvt initVideoInputSystem(){
 	
 
 	foreach(envDevs, EnvDevice_Video_Data, vdData){
-	    List(VideoMode) modesList = pushList(VideoMode);
+	    List(VideoMode) modesList = pushList(VideoMode, 10);
 	    graphicsDevice device = {0};
 	    struct v4l2_capability caps;
 	
-	    if(ioctl(vdData.fd, VIDIOC_QUERYCAP, &caps) == -1){
+	    int videoFD = open(vdData.devPath->txt, O_RDWR);
+
+	    if(ioctl(videoFD, VIDIOC_QUERYCAP, &caps) == -1){
 	    	logerr("failed to query video device capibilities for ", $(vdData.name), ", continuing to next...");
 	    	continue;
 	    }
@@ -112,7 +114,7 @@ errvt initVideoInputSystem(){
 	    device.model	= newString((char*)caps.driver,   16);
 	    device.direction    = VIDEO_IN; 
 	
-	    i32 currentIndex = enumVideoModes(vdData.fd, modesList);
+	    i32 currentIndex = enumVideoModes(videoFD, modesList);
 	    
 	    device.supportedModes = List.FreeToPointer(modesList);
 	    
@@ -122,7 +124,7 @@ errvt initVideoInputSystem(){
 	    }else{
 	    	device.currentMode = currentIndex;
 	    }
-	    OSDeviceManager.registerOSDevice(OSDevices, EnvDevice_Video, &vdData, 
+	    OSDeviceManager.registerOSDevice(OSDevices, EnvDevice_Video, vdData.id, 
 						        OSDevice_Graphics,&device, 
 		b(
 	    		OSresource(&String,   device.name),
@@ -135,6 +137,7 @@ errvt initVideoInputSystem(){
 	}
 
 	pop(envDevs);
+
 
 return OK;
 }
@@ -155,14 +158,36 @@ Type(LinuxGraphics_Data,
      	    void* display;
      	}data;
 )
-graphicsHandle vmethodimpl(LinuxEnv_Graphics, grabDeviceAnyDirection, graphicsDevice* device){
+errvt vmethodimpl(LinuxGraphics, initSystem){
+	errvt errval = ERR_NONE;
+
+	iferr(LinuxGraphics_initDisplaySystem())
+		return err;
+
+	iferr(initVideoInputSystem())
+		return err;
+
+	
+	errval = setup(VideoEvents);
+	errval = setup(DisplayEvents);
+
+return errval;
+}
+errvt vmethodimpl(LinuxGraphics, exitSystem){
+	errvt errval = ERR_NONE;
+
+	iferr(LinuxGraphics_exitDisplaySystem())
+		return err;
+return OK;
+}
+graphicsHandle vmethodimpl(LinuxGraphics, grabDeviceAnyDirection, graphicsDevice* device){
 	
 	LinuxGraphics_Data* result = new(LinuxGraphics_Data, .in_out = device->direction);
 
 	shortName(result->data.video, video)
 
 	if(device->direction == VIDEO_OUT){
-		result->data.display = LinuxEnv_Graphics_grabDevice(device);
+		result->data.display = LinuxGraphics_grabDevice(device);
 		return result;
 	}
 
@@ -173,7 +198,12 @@ graphicsHandle vmethodimpl(LinuxEnv_Graphics, grabDeviceAnyDirection, graphicsDe
 			
 		)
 	;
-		
+	result->data.video.fd = open(envData->devPath->txt, O_RDWR);
+	
+	if(result->data.video.fd == -1){
+		free(result);
+	}
+
 	// Set the video format
 	struct v4l2_format fmt = {
 	    .type = V4L2_BUF_TYPE_VIDEO_CAPTURE,
@@ -186,9 +216,9 @@ graphicsHandle vmethodimpl(LinuxEnv_Graphics, grabDeviceAnyDirection, graphicsDe
 	    }
 	};
 	
-	if (ioctl(envData->fd, VIDIOC_S_FMT, &fmt) == -1) {
+	if (ioctl(result->data.video.fd, VIDIOC_S_FMT, &fmt) == -1) {
 		ERR(ERR_FAIL, "VIDIOC_S_FMT failed");
-		del(result);
+		free(result);
 		return NULL;
 	}
 
@@ -204,15 +234,15 @@ graphicsHandle vmethodimpl(LinuxEnv_Graphics, grabDeviceAnyDirection, graphicsDe
 		.memory = V4L2_MEMORY_MMAP
 	};
 
-	if (ioctl(envData->fd, VIDIOC_REQBUFS, &req) == -1) {
+	if (ioctl(result->data.video.fd, VIDIOC_REQBUFS, &req) == -1) {
 		ERR(ERR_FAIL, "VIDIOC_S_FMT failed");
 		del(video->buffers)
-		del(result);
+		free(result);
 		return NULL;
 	}
 	
-	video->frames 	  = newList(VideoFrame);	
-	video->freeFrames = newQueue(u32);	
+	video->frames 	  = newList(VideoFrame, 10);	
+	video->freeFrames = newQueue(u32, 10);	
 	
 
 	// Map the buffers into the process's address space and queue them
@@ -223,28 +253,28 @@ graphicsHandle vmethodimpl(LinuxEnv_Graphics, grabDeviceAnyDirection, graphicsDe
 		buff->info.memory = V4L2_MEMORY_MMAP;
 		buff->info.index = i;
 		
-		if (ioctl(envData->fd, VIDIOC_QUERYBUF, &buff->info) == -1) {
+		if (ioctl(result->data.video.fd, VIDIOC_QUERYBUF, &buff->info) == -1) {
 			ERR(ERR_FAIL, "VIDIOC_QUERYBUF failed");
 			del(video->buffers)
 			del(video->frames)
 			del(video->freeFrames)
-			del(result);
+			free(result);
 			return NULL;
 		}
 
 		buff->data = mmap(NULL, buff->info.length,
 			PROT_READ | PROT_WRITE, MAP_SHARED,
-			envData->fd, buff->info.m.offset);
+			result->data.video.fd, buff->info.m.offset);
 		if (buff->data == MAP_FAILED) {
 			ERR(ERR_FAIL, "mmap failed");
 			del(video->buffers)
 			del(video->frames)
 			del(video->freeFrames)
-			del(result);
+			free(result);
 			return NULL;
 		}
 
-		if (ioctl(envData->fd, VIDIOC_QBUF, &buff->info) == -1) {
+		if (ioctl(result->data.video.fd, VIDIOC_QBUF, &buff->info) == -1) {
 			ERR(ERR_FAIL, "VIDIOC_QBUF failed");
 			del(video->buffers)
 			del(video->frames)
@@ -259,8 +289,8 @@ graphicsHandle vmethodimpl(LinuxEnv_Graphics, grabDeviceAnyDirection, graphicsDe
 
 return result;
 }
-errvt vmethodimpl(LinuxEnv_Graphics, startVideo, graphicsHandle handle){
-	nonull(handle, return nullerr);
+errvt vmethodimpl(LinuxGraphics, startVideo, graphicsHandle handle){
+	nonull(handle, return err);
 	LinuxGraphics_Data* vdHandle = handle;
 
 	if (ioctl(vdHandle->data.video.fd, VIDIOC_STREAMON, &(u32){V4L2_BUF_TYPE_VIDEO_CAPTURE}) == -1) 
@@ -268,8 +298,8 @@ errvt vmethodimpl(LinuxEnv_Graphics, startVideo, graphicsHandle handle){
 	
 return OK;
 }
-errvt vmethodimpl(LinuxEnv_Graphics, stopVideo, graphicsHandle handle){
-	nonull(handle, return nullerr);
+errvt vmethodimpl(LinuxGraphics, stopVideo, graphicsHandle handle){
+	nonull(handle, return err);
 	LinuxGraphics_Data* vdHandle = handle;
 
 	if (ioctl(vdHandle->data.video.fd, VIDIOC_STREAMOFF, &(u32){V4L2_BUF_TYPE_VIDEO_CAPTURE}) == -1) 
@@ -277,8 +307,8 @@ errvt vmethodimpl(LinuxEnv_Graphics, stopVideo, graphicsHandle handle){
 	
 return OK;
 }
-errvt vmethodimpl(LinuxEnv_Graphics, closeVideo, graphicsHandle handle){
-	nonull(handle, return nullerr);
+errvt vmethodimpl(LinuxGraphics, closeVideo, graphicsHandle handle){
+	nonull(handle, return err);
 	LinuxGraphics_Data* vdHandle = handle;
 	
 	if(vdHandle->in_out != VIDEO_IN)
@@ -294,7 +324,7 @@ errvt vmethodimpl(LinuxEnv_Graphics, closeVideo, graphicsHandle handle){
 	del(vdHandle);
 return OK;
 }
-errvt vmethodimpl(LinuxEnv_Graphics, pullVideoFrame, graphicsHandle handle, VideoFrame* frame){
+errvt vmethodimpl(LinuxGraphics, pullVideoFrame, graphicsHandle handle, VideoFrame* frame){
 	nonull(handle, return NULL);
 	nonull(frame, return NULL);
 
@@ -329,7 +359,7 @@ errvt vmethodimpl(LinuxEnv_Graphics, pullVideoFrame, graphicsHandle handle, Vide
 return OK;
 }
 
-errvt vmethodimpl(LinuxEnv_Graphics, pushVideoFrame, graphicsHandle handle, VideoFrame* frame){
+errvt vmethodimpl(LinuxGraphics, pushVideoFrame, graphicsHandle handle, VideoFrame* frame){
 	nonull(handle, return NULL);
 	LinuxGraphics_Data* gfx = handle;
 	
@@ -347,32 +377,45 @@ errvt vmethodimpl(LinuxEnv_Graphics, pushVideoFrame, graphicsHandle handle, Vide
 
 return OK;
 }
-errvt vmethodimpl(LinuxEnv_Graphics, handleEvents, graphicsHandle handle, Queue(OSEvents) evntQueue){
-	nonull(handle, return nullerr);
+errvt vmethodimpl(LinuxGraphics, handleEvents, graphicsHandle handle, Queue(OSEvents) evntQueue){
+	nonull(handle, return err);
 	LinuxGraphics_Data* gfx = handle;
 
 	List.Append(gfx->evntQueues, &evntQueue, 1);
 
 return OK;
 }
-u64 vmethodimpl(LinuxEnv_Graphics, pollEvents){
-
+u64 vmethodimpl(LinuxGraphics, pollVideoEvents){
+	run(VideoEvents);
+return VideoEvents.ports.numEvents;
+}
+u64 vmethodimpl(LinuxGraphics, pollDisplayEvents){
+	run(DisplayEvents);
+return DisplayEvents.ports.numEvents;
+}
+u64 vmethodimpl(LinuxGraphics, pollEvents){
+return LinuxGraphics_pollVideoEvents() + LinuxGraphics_pollDisplayEvents();
 }
 
 
 const ImplAs(graphics, LinuxGraphics){	
-	.initSystem 	 = LinuxEnv_Graphics_initSystem,
-	.exitSystem 	 = LinuxEnv_Graphics_exitSystem,
-	.initDisplay 	 = LinuxEnv_Graphics_initDisplay,
-	.enumDevices 	 = LinuxEnv_Graphics_enumDevices,
-	.grabDevice 	 = LinuxEnv_Graphics_grabDeviceAnyDirection,
-	.closeDisplay 	 = LinuxEnv_Graphics_closeDisplay,
-	.isDisplayClosed = LinuxEnv_Graphics_isDisplayClosed,
-	.closeVideo	 = LinuxEnv_Graphics_closeVideo,
-	.startVideo	 = LinuxEnv_Graphics_startVideo,
-	.stopVideo	 = LinuxEnv_Graphics_stopVideo,
-	.pullVideoFrame	 = LinuxEnv_Graphics_pullVideoFrame,
-	.pushVideoFrame	 = LinuxEnv_Graphics_pushVideoFrame,
-	.handleEvents	 = LinuxEnv_Graphics_handleEvents,
-	.pollEvents	 = LinuxEnv_Graphics_pollEvents
+	.initSystem 	 = LinuxGraphics_initSystem,
+	.exitSystem 	 = LinuxGraphics_exitSystem,
+	.enumDevices 	 = LinuxGraphics_enumDevices,
+	.grabDevice 	 = LinuxGraphics_grabDeviceAnyDirection,
+	.handleEvents	 = LinuxGraphics_handleEvents,
+	.pollEvents	 = LinuxGraphics_pollEvents,
+	.display = {
+		.init 		 = LinuxGraphics_initDisplay,
+		.close= LinuxGraphics_closeDisplay,
+		.isClosed = LinuxGraphics_isDisplayClosed,
+		
+	},
+	.video = {
+		.close= LinuxGraphics_closeVideo,
+		.start= LinuxGraphics_startVideo,
+		.stop= LinuxGraphics_stopVideo,
+		.pullFrame	 = LinuxGraphics_pullVideoFrame,
+		.pushFrame	 = LinuxGraphics_pushVideoFrame,
+	}
 };
