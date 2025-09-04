@@ -1,11 +1,12 @@
 #pragma once
-#include "../extern.h"
+#include "./extern.h"
 #include "./user.h"
 
 #define FS_DIR true
 #define FS_FILE false
 
-typedef void* fsHandle;
+typedef void* storageHandle;
+
 typedef char fsPath[256];
 Type(fsEntry,
 	union {
@@ -21,7 +22,11 @@ Type(fsEntry,
 	inst(Time) time_modified;
 )
 
-Interface(filesys,
+Interface(storage,
+    namespace(device,
+	
+    )
+    namespace(fs,
 	namespace(flags,
 		int 
 	   	CREATE, 
@@ -35,19 +40,22 @@ Interface(filesys,
 	  	APPDATA,
 	  	ROOT;
 	)
-	fsHandle vmethod(open,    bool DIR, fsPath path, int flags);
-	i64 	 vmethod(write,   fsHandle handle, pntr data, size_t size);
-	i64 	 vmethod(read,    fsHandle handle, pntr data, size_t size);
+	storageHandle vmethod(open,    bool DIR, fsPath path, int flags);
 	errvt 	 vmethod(search,  fsPath path, fsEntry* ent);
-	errvt  	 vmethod(close,   fsHandle handle);
 	errvt  	 vmethod(delete,  fsPath path);
 	errvt  	 vmethod(chdir,   fsPath path);
-	errvt  	 vmethod(handleEvents, fsHandle handle, Queue(OSEvent) evntQueue);
 	u64  	 vmethod(pollEvents);
-	struct {
+	namespace(ext,
+		const bool implemented;
 		errvt vmethod(readLink,     fsPath path, fsPath result)
 		errvt vmethod(makeLink,     fsPath path, fsPath result)
 		errvt vmethod(changePerms,  fsPath path, userPermissions perms);
 		errvt vmethod(changeOwner,  fsPath path, userHandle user);
-	} ext;	
+	);	
+    )
+
+	i64 	 vmethod(write,        storageHandle handle, pntr data, size_t size);
+	i64 	 vmethod(read,         storageHandle handle, pntr data, size_t size);
+	errvt  	 vmethod(close,        storageHandle handle);
+	errvt  	 vmethod(handleEvents, storageHandle handle, Queue(OSEvent) evntQueue);
 )

@@ -1,97 +1,139 @@
 #pragma once
-#include "./interface.h"
-
-#define SOCKET_PROTOCAL_NULL 0x00
-#define SOCKET_PROTOCAL_UDP 0x01
-#define SOCKET_PROTOCAL_TCP 0x02
-#define SOCKET_PROTOCAL_RAW 0x03
-
-#define SOCKET_DOMAIN_NULL 0x00
-#define SOCKET_DOMAIN_IPV6 0x01
-#define SOCKET_DOMAIN_IPV4 0x02
-#define SOCKET_DOMAIN_LOCAL 0x03
-
-#define D_IPV4 SOCKET_DOMAIN_IPV4
-#define D_IPV6 SOCKET_DOMAIN_IPV6
-#define D_LOCAL SOCKET_DOMAIN_LOCAL
+#include "./extern.h"
 
 
-#define Protocal(name, ...) 					\
-	typedef struct{ __VA_ARGS__ } name##_header; 		\
-	inline Packet msg##name(name##_header header, Packet body)
+typedef void* networkHandle;
 
-#define msgHandler(protocal, ...) 				\
-	inline Packet msg##name(name##_header header, Packet body)
+typedef u8 ipv4_netaddress[4];
+typedef u16 ipv6_netaddress[8];
+typedef int socketType;
 
-#define msgBuild(packet, ...){ 			\
-	Packet __parent_packet = {0};		\
-		__VA_ARGS__; 			\
-	packet = __parent_packet;		\
-} 
-#define msgSend(conn, ...){ 			\
-	Packet __parent_packet = {0};		\
-		__VA_ARGS__; 			\
-	Connection.Send(conn, __parent_packet);	\
-} 
+Type(socketAddress,
+     	socketType type;
+	union {
+	    struct ipv4Address{
+		u16 port;
+		ipv4_netaddress address;
+     	    }ipv4;
+	    struct ipv6Address{
+		u16 port;
+		ipv6_netaddress address;
+     	    }ipv6;
+	    struct localAddress{
+		inst(String) path;
+     	    }local;
+     	}data;
+);
 
-#define msgReturn(...){			 	\
-	Packet __parent_packet = {0};		\
-		__VA_ARGS__; 			\
-	return __parent_packet;			\
-}
+typedef struct ipv4Address ipv4Address;
+typedef struct ipv6Address ipv6Address;
+typedef struct localAddress localAddress;
 
-#define msgBuff(buff, size) (Packet){size,buff}
-#define msgString(string) __parent_packet = (Packet){strnlen(string, UINT64_MAX), string}; 
-#define msgText(...) msgString(#__VA_ARGS__)
-#define msg(protocal, ...)	 		\
-	 Packet* protocal##_packet 		\
-		 = &__parent_packet; 		\
-	for(Packet __parent_packet = {0};	\
-	    protocal##_packet->size == 0; 	\
-	    *protocal##_packet = msg##protocal(	\
-		(protocal##_header){__VA_ARGS__}\
-		, __parent_packet))
-
-
-Type(socket_settings,
-	u8 protocal : 2;
-	u8 domain   : 2;
-	u8 blocking : 1;
+Enum(netCall_Flags,
+	netCall_Async = 1
 )
 
-typedef struct Connection_Instance Connection_Instance;
+#define netField(name, access, type, data) (netobjFieldInfo){s(name),NETFIELD_##access,(DSN_data){DSN_##type, data}}
+#define netMethodImpl(name, implModule, ...) (netobjMethodInfo){s(name),(DSN_data){DSN_STRUCT, newStruct(__VA_ARGS__)}, &implModule, implModule##_Logic}
+#define netMethodDecl(name, ...) (netobjMethodInfo){s(name),(DSN_data){DSN_STRUCT, newStruct(__VA_ARGS__)}, NULL, NULL}
 
-Class(Socket,
-__INIT(socket_settings settings;),
-__FIELD(),
+Blueprint(NetObjMethod,
+__IO(in_DSN_data parameters; out_DSN_data returnvalue), 
+__DATA()
+)
 
-	errvt method(Socket,Bind,, socketAddress address);
-	errvt method(Socket,Listen,, u32 num_waiting);
-	inst(Connection) method(Socket,Accept);
-	socket_settings method(Socket,GetSettings);
-      	socketAddress method(Socket, GetAddress);
+Type(netobjMethodInfo, 
+	inst(String) name; 
+     	DSN_data parameters;
+     	modl(Module) module; 
+     	moduleLogic impl;
 );
 
+#define NETFIELD_GET 1
+#define NETFIELD_SET 2
+#define NETFIELD_GET_SET (NETFIELD_GET | NETFIELD_SET)
 
-Type(Packet,
-	u32 size;
-	void* buff;
-);
+Type(netobjFieldInfo,
+	inst(String) name; 
+     	u16 access;
+	DSN_data data;
+)
+Type(netobjInfo,
+     	data(String)
+     	* interface,
+     	* name;
+	Buffer(networkMethodInfo) methods;
+	Buffer(networkFieldInfo)  field;
+)
 
-Class(Connection,
-__INIT(socket_settings settings; socketAddress address), 
-__FIELD(),
 
-	errvt method(Connection,Send,, Packet message);
-	errvt method(Connection,Recieve,, Packet message);
-	errvt method(Connection,Watch);
-	errvt method(Connection,UnWatch);
-	bool method(Connection,Check);
-	errvt method(Connection,GroupJoin,, socketAddress address, void* interface_addr);
-	errvt method(Connection,GroupLeave);
-	errvt method(Connection,GroupSend,, Packet message);
-	errvt method(Connection,GroupRecive,, Packet message);
-	socket_settings method(Connection,GetSettings);
-      	socketAddress method(Socket, GetAddress,, bool groupAddress);
-);
+Type(networkDevice,
+	data(String)
+     	* name,          	
+     	* description;          
+	u8 mac_address[6]; 	
+	bool up; 		
+)
+
+Interface(network,
+	const cstr stdVersion;
+	errvt 		vmethod(initSystem);
+	errvt 		vmethod(exitSystem);
+	namespace(socket,
+	  namespace(type,
+	     	socketType
+		LOCAL,
+		IPV4,
+		IPV6,
+		TCP ,
+		UDP ,
+		RAW ;
+	  )
+	networkHandle 	vmethod(init,  		socketType   type);	
+	errvt 		vmethod(bind, 		networkHandle handle, socketAddress* address);
+	errvt 		vmethod(listen,     	networkHandle handle, u32 num_connect);
+	networkHandle 	vmethod(connect,    	socketType type, socketAddress* address);
+	networkHandle	vmethod(accept,     	networkHandle handle);
+	errvt 		vmethod(send, 	    	networkHandle handle, inst(Buffer) message);
+	errvt 		vmethod(recv,    	networkHandle handle, inst(Buffer) message);
+	namespace(group,
+	errvt 		vmethod(join,  		networkHandle handle, socketAddress address, const char* interface_name);
+	errvt 		vmethod(leave,   	networkHandle handle);
+	errvt 		vmethod(send,    	networkHandle handle, inst(Buffer) message);
+	errvt 		vmethod(recive,  	networkHandle handle, inst(Buffer) message);
+	)
+	)
+	namespace(obj,
+	const bool implemented; // for compatibiliy reasons
+	errvt 		vmethod(init,    netobjInfo* blueprint);
+	errvt 		vmethod(getInfo,   cstr path, netobjInfo* info);
+	errvt 		vmethod(implement, netobjInfo* blueprint);
+	networkHandle 	vmethod(find,  cstr interface, cstr object);
+	DSN_data 	vmethod(call,  networkHandle object, netCall_Flags flags, cstr method, DSN_data* args);
+	DSN_data 	vmethod(get,   networkHandle object, netCall_Flags flags, cstr field);
+	errvt 		vmethod(set,   networkHandle object, netCall_Flags flags, cstr field,  DSN_data value);
+	errvt 		vmethod(close, networkHandle handle);
+	)
+	namespace(device,
+	networkHandle 	vmethod(grab, 	 	networkDevice* device);
+	errvt 		vmethod(drop, 	 	networkHandle);
+	networkDevice* 	vmethod(enumerate, 	u64* numDevices);
+	errvt		vmethod(filter)
+	errvt		vmethod(send,		inst(Buffer) message);
+	errvt		vmethod(recv,		inst(Buffer) message);
+	errvt		vmethod(wait,		inst(Buffer) message);
+	)
+	errvt 	  	vmethod(handleEvents,  	 networkHandle handle, Queue(OSEvent) evntQueue);
+	u64 	  	vmethod(pollEvents);
+)
+Enum(socketEventType,
+    socketEvent_NewClient,
+    socketEvent_Recive,
+    socketEvent_Close
+)
+Type(socketEvent,
+    networkHandle handle;
+    socketEventType type;
+)
+
 

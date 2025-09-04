@@ -1,36 +1,65 @@
 #pragma once
-#include "./interface.h"
+#include "./extern.h"
 
+typedef void* inputHandle;
 
-
-typedef struct {
-	inhert(VecData);
-     	float x,y,z;
-}Pos3D;
-asClassExt(Pos3D, __INIT(float x,y,z;));
-
-typedef struct {
-	inhert(VecData);
-     	float x,y;
-}Pos2D;
-asClassExt(Pos2D, __INIT(float x,y;));
-
-typedef struct {
-	inhert(VecData);
-     	float x;
-}Pos1D;
-asClassExt(Pos1D, __INIT(float x;));
-
-
-typedef struct{inhertAs(Pos3D) pos; float max, min;}* posData;
-Interface(PosDevice,
-	posData imethod(get);	
-	errvt imethod(update,, posData pos);
-	inputHandle imethod(getHandle);
+Type(keyInput,
+     	inst(String) locale;	
+	chartype encoding;
+)
+Enum(posRange_Type,
+     	posRange_Null,
+	posRange_Vector,
+     	posRange_Exact,
+     	posRange_Stateful
 )
 
-typedef struct{u32 code; bool cont;} keyCode;
-Interface(KeyDevice,
-	keyCode imethod(get);
-	inputHandle imethod(getHandle);
+Type(posInput,
+	u8 dimension  : 2;
+     	posRange_Type type : 2;
+	float low;
+	float high;
+)
+	  
+Type(inputDevice,
+	inst(String) name;
+	inst(String) uniqueID;
+	u16 vendorID, productID;
+     	u16 num_posInputs;
+     	u16 num_keyInputs;
+     	arry(posInput) posInputs;
+     	arry(keyInput) keyInputs;
+)
+Interface(input,
+	const cstr stdVersion;
+	arry(inputDevice) vmethod(enumDevices, 	    u64* numDevices);
+	errvt 		  vmethod(freeDevice,       inputHandle handle);
+	inputHandle 	  vmethod(grabDevice, 	    inputDevice* dev);
+	errvt 		  vmethod(handleEvents,     inputHandle handle, Queue(OSEvent) evntQueue);
+	u64 		  vmethod(pollEvents);
+)
+
+Enum(inputEvent_Type,
+	inputEvent_Update,
+	inputEvent_Close
+)
+
+
+#define AXIS_X 0
+#define AXIS_Y 1
+#define AXIS_Z 2
+
+Type(inputEvent,
+	inputDevice* device;
+	inputEvent_Type type;
+     	union {
+	  struct{
+		float axis[3];
+	  	u16 ID;
+	  }pos;
+	  struct{
+		u32 code;
+	  	u16 ID;
+	  }key;
+     	}data;
 )

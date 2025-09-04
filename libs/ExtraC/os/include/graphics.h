@@ -1,53 +1,100 @@
 #pragma once
-#include "./interface.h"
-#include "input.h"
+#include "./extern.h"
 
-
-typedef struct Color Color;
-Interface(ColorEncoding,
-	Color imethod(toRGBA);
-	errvt imethod(fromRGBA,, Color color);
+Type(VideoMode,
+	u32 width;
+	u32 height;
+	u16 refreshRate;
 )
 
-Type(Color,
-      	#define RGBA(r,g,b,a) (data(Color)){((float)r/255.0),((float)g/255.0),((float)b/255.0),((float)a/255.0)}
- 	float r,g,b,a;
-);
+#define FOURCC_CODE(code) ((u32)(code[0]) | ((u32)(code[1]) << 8) | ((u32)(code[2]) << 16) | ((u32)(code[3]) << 24))
 
-Class(Canvas,
-__INIT(),
-__FIELD(),
+typedef u32 FOURCC_CODE;
+Type(VideoPixelFormat,
+	FOURCC_CODE type;
+     	u32 
+     	    bottomMostModeIndex,
+     	    topMostModeIndex;
+)
+
+Type(VideoFrame,
+	void* buffer;
+     	u32 frameIndex;
+)
+#define VIDEO_IN true
+#define VIDEO_OUT false
+
+typedef bool videoDirection;
+
+Type(graphicsDevice,
+	inst(String) name;
+	inst(String) manufacturer;
+	inst(String) model;
+
+	void* uniqueID;
+     	
+	videoDirection direction;
+
+	u32 currentMode;
+	VideoMode* supportedModes;
+
+	union{
+	  struct{
+		u16 dpi;
+		u16 bitDepth;
+		u16 rotation;
 	
+		bool primary;
+	  } display;
+	  struct{
+		u32 currentPixFmt;
+		VideoPixelFormat* supportedPixFmts;
+	  } video;
+	} info;
+
 
 )
-Interface(RenderPrimitives,
-      	errvt imethod(drawRectangle,, float x, float y, float w, float h, u16 z, Color Color);
-      	errvt imethod(drawLine,,      float x, float y, float x2, float y2, u16 z, Color Color);
-      	errvt imethod(drawPixel,,     float x, float y, u16 z, Color Color);
+typedef void* graphicsHandle;
+
+Interface(graphics,
+	const cstr stdVersion;
+	errvt 			vmethod(initSystem);
+	errvt 			vmethod(exitSystem);
+	graphicsHandle 		vmethod(grabDevice, 	 graphicsDevice* device);
+	arry(graphicsDevice) 	vmethod(enumDevices, 	 u64* numDevices);
+	namespace(display,
+	graphicsHandle 		vmethod(init, 	  	 u32 x, u32 y, u32 w, u32 h, graphicsHandle parent);
+	errvt	 		vmethod(close,    	 graphicsHandle handle);
+	errvt	 		vmethod(update,   	 graphicsHandle handle, u32 x, u32 y, u32 w, u32 h, graphicsHandle parent);
+	bool	 		vmethod(isClosed, 	 graphicsHandle);
+	u64   			vmethod(pollEvents);
+	)
+	namespace(video,
+	errvt			vmethod(start, 	 	 graphicsHandle handle);
+	errvt			vmethod(stop,  	 	 graphicsHandle handle);
+	errvt			vmethod(close, 	 	 graphicsHandle handle);
+	errvt			vmethod(pullFrame,	 graphicsHandle handle, VideoFrame* frame);
+	errvt			vmethod(pushFrame,	 graphicsHandle handle, VideoFrame* frame);
+	u64   			vmethod(pollEvents);
+	)
+	errvt 		  	vmethod(handleEvents,  	 graphicsHandle handle, Queue(OSEvent) evntQueue);
+	u64 		  	vmethod(pollEvents);
 )
 
-Interface(Render,
-	errvt imethod(setCanvas,, inst(Canvas) display);
-	errvt imethod(renderFrame);
-      	errvt imethod(swapBuffers);
-      	errvt imethod(clearCanvas,,   Color clearColor);
+Enum(displayEvent_Type,
+    displayEvent_Resize,	
+    displayEvent_Close,	
+    displayEvent_Visibility,	
+)
+Type(displayEvent,
+    	graphicsHandle handle;
+ 	displayEvent_Type type;
 )
 
-
-Class(Display, 
-__INIT(inst(Display) parent; char* name; u64 w,h,x,y;),
-__FIELD(inst(Display) parent; char* name; u64 w,h,x,y),
-      	errvt 		method(Display, addChild,, inst(Display) display);
-      	errvt 		method(Display, update);
-      	errvt 		method(Display, run);
-      	errvt 		method(Display, stop);
-      	errvt 		method(Display, lock,,  u8 attrb_to_lock);
-	bool 		method(Display, isRunning);
-	graphicsHandle  method(Display, getHandle);
-	inst(Canvas)    method(Display, getCanvas);
-	
+Enum(videoEvent_Type,
+    videoEvent_NewFrame,
 )
-
-extern inst(Display) defaultDisplay;
-
-
+Type(videoEvent,
+    	graphicsHandle handle;
+ 	videoEvent_Type type;
+)

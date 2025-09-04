@@ -1,12 +1,12 @@
 #pragma once
 #include "extern.h"
-#include "./os-interface/filesys.h"
-#include "./os-interface/input.h"
-#include "./os-interface/graphics.h"
-#include "./os-interface/audio.h"
-#include "./os-interface/scheduler.h"
-#include "./os-interface/memory.h"
-#include "./os-interface/network.h"
+#include "./storage.h"
+#include "./input.h"
+#include "./graphics.h"
+#include "./audio.h"
+#include "./scheduler.h"
+#include "./memory.h"
+#include "./network.h"
 
 /*--------------------------------------|
 	      OS BACKEND		|
@@ -16,7 +16,7 @@ typedef u32 OSEventType;
 
 #define SYS_GRAPHICS 0
   #define SYS_GRAPHICS_DISPLAY 0
-  #define SYS_GRAPHICS_VIDEO 1
+  #define SYS_GRAPHICS_VIDEO   1
 
 #define SYS_AUDIO 1 
 
@@ -27,9 +27,9 @@ typedef u32 OSEventType;
 #define SYS_NETWORK 3
 
 Type(OSEvent,
-	u8 osSystem : 3;
-     	u8 osResource : 5;
-	union{
+	u8 osSystem   : 4;
+     	u8 osResource : 4;
+	union {
 		inputEvent input;
 		socketEvent socket;
 		displayEvent display;
@@ -40,24 +40,26 @@ Type(OSEvent,
 
 typedef void* osHandle;
 
+Type(AppData,
+	cstr  appName, domainName;
+     	cstr* argv;
+     	cstr  instNumber;
+)
+
 Static(OS,
-	interface(filesys);		
+	interface(storage);		
 	interface(input);		
 	interface(graphics);	
 	interface(audio);		
 	interface(scheduler);	
 	interface(memory);		
 	interface(network);		
+	interface(user);		
 
 	cstr OSName;
-	errvt vmethod(initOS);
+	errvt vmethod(initOS, AppData appData);
 	errvt vmethod(exitOS);
 	u64   vmethod(pollEvents);
+	AppData vmethod(getAppData);
 );
 
-using_namespace(OS.network.socket, socket); 
-
-void test(){
-
-	
-}

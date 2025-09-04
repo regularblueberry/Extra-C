@@ -1,5 +1,5 @@
 #pragma once
-#include "../extern.h"
+#include "./extern.h"
 
 // encompasses both groups and individual users
 typedef void* userHandle;

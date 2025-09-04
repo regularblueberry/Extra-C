@@ -1,5 +1,5 @@
 #pragma once
-#include "./interface.h"
+#include "../OS.h"
 
 #define pathtostr(path) str_cast(path, sizeof(fsPath))
 
@@ -14,12 +14,6 @@
 #define DFL_READ 	0x01
 #define DFL_WRITE 	0x02
 
-Static(FileSys,
-	errvt vmethod(search, fsPath path, fsEntry* result);
-	errvt vmethod(chDir);
-	errvt vmethod(set, intf(filesys) fs);
-)
-
 Class(File,
 __INIT(cstr path; u8 flags; u16 char_size),
 __FIELD(),
@@ -32,6 +26,7 @@ __FIELD(),
 	#define scanln(...) 		   File.ScanFrom(File.in, "\n", __VA_ARGS__, endscan)
 
 	interface(Loggable);
+	interface(IterableList);
 
 	inst(File) in;
 	inst(File) out;
@@ -55,18 +50,12 @@ Class(Dir,
 __INIT(cstr path; u8 flags;),
 __FIELD(),
 	
+	interface(IterableList);
+	
 	i64 	  method(Dir, Read,,  fsEntry* output , u64 len);
 	i64 	  method(Dir, Write,, fsEntry* input , u64 len);
 	errvt 	  method(Dir, Move,,  fsPath path);
 	errvt 	  method(Dir, Copy,,  inst(Dir)* new_dir, fsPath path);
 	inst(Dir) vmethod(Create,     fsPath path, u8 flags);
 	errvt 	  vmethod(SetCurrent, fsPath path);
-	
-	#define DirForEach(dir, entbuf_size)								\
-		fsEntry 	dir##_entries[entbuf_size];						\
-		u32 		dir##_entries_read = 0;							\
-		while((dir##_entries_read = Dir.Read(dir, dir##_entries, entbuf_size)) > 0)		\
-		    for(fsEntry ent = dir##_entries[--dir##_entries_read]; 				\
-			dir##_entries_read < 0; 							\
-			ent = dir##_entries[--dir##_entries_read])			
 )
