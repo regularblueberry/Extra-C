@@ -11,11 +11,11 @@ Type(LinuxThread,
 	pthread_t thread;
 );
 
-void vmethodimpl(LinuxEnv_Scheduler, sleep, u64 millisec){
+void vmethodimpl(LinuxScheduler, sleep, u64 millisec){
 	usleep(millisec);
 }
 
-threadHandle vmethodimpl(LinuxEnv_Scheduler, newThread, void fn(startfn,void*), void* args){
+threadHandle vmethodimpl(LinuxScheduler, initThread, void fn(startfn,void*), void* args){
 	nonull(startfn, return NULL);
 
 	LinuxThread* result = new(LinuxThread);
@@ -65,10 +65,10 @@ processHandle parentProcessStart(u32 flags, processHandle child){
 return child;
 }
 
-processHandle vmethodimpl(LinuxEnv_Scheduler, newProcess, cstr exePath, cstr args, u32 flags){
+processHandle vmethodimpl(LinuxScheduler, initProcess, cstr exePath, cstr args, u32 flags){
 	nonull(exePath, return NULL);
 
-	List(cstr) list = pushList(cstr);
+	List(cstr) list = pushList(cstr, 10);
 	u64 start = 0;	
 	for(int i = 0;;){
 		if(args[i] == '\0') break;
@@ -99,8 +99,8 @@ processHandle vmethodimpl(LinuxEnv_Scheduler, newProcess, cstr exePath, cstr arg
 return result;
 }
 
-errvt vmethodimpl(LinuxEnv_Scheduler, killProcess, processHandle handle){
-	nonull(handle, return nullerr);
+errvt vmethodimpl(LinuxScheduler, killProcess, processHandle handle){
+	nonull(handle, return err);
 
 	if(kill(addrasval(handle), SIGTERM) == -1){
 		switch (errno) {
@@ -120,18 +120,18 @@ return OK;
 }
 
 
-threadHandle vmethodimpl(LinuxEnv_Scheduler, getCurrentThread){
+threadHandle vmethodimpl(LinuxScheduler, getCurrentThread){
 	threadHandle result = (threadHandle)pthread_self();
 return result;
 }
 
 typedef struct {pthread_mutex_t mut;}lin_mutex;
 asClass(lin_mutex){ passover }
-mutexHandle vmethodimpl(LinuxEnv_Scheduler, newMutex){
+mutexHandle vmethodimpl(LinuxScheduler, initMutex){
 	mutexHandle result = new(lin_mutex, PTHREAD_MUTEX_INITIALIZER);
 return result;
 }
-errvt vmethodimpl(LinuxEnv_Scheduler, lockMutex, mutexHandle handle){
+errvt vmethodimpl(LinuxScheduler, lockMutex, mutexHandle handle){
 	if(pthread_mutex_lock(&((lin_mutex*)handle)->mut) == -1){
 		switch (errno) {
 		case EINVAL : { return ERR(ERR_FAIL, "invalid mutex"); }
@@ -142,7 +142,7 @@ errvt vmethodimpl(LinuxEnv_Scheduler, lockMutex, mutexHandle handle){
 	}
 return OK;
 }
-errvt vmethodimpl(LinuxEnv_Scheduler, unlockMutex, mutexHandle handle){
+errvt vmethodimpl(LinuxScheduler, unlockMutex, mutexHandle handle){
 	if(pthread_mutex_unlock(&((lin_mutex*)handle)->mut) == -1){
 		switch (errno) {
 		case EPERM  : { return ERR(ERR_FAIL, "The current thread does not own the mutex."); }
@@ -153,7 +153,7 @@ errvt vmethodimpl(LinuxEnv_Scheduler, unlockMutex, mutexHandle handle){
 	}
 return OK;
 }
-errvt vmethodimpl(LinuxEnv_Scheduler, tryLockMutex, mutexHandle handle){
+errvt vmethodimpl(LinuxScheduler, tryLockMutex, mutexHandle handle){
 	if(pthread_mutex_trylock(&((lin_mutex*)handle)->mut) == -1){
 
 		switch (errno) {
@@ -169,7 +169,7 @@ return OK;
 typedef struct {sem_t sem;}lin_semaphore;
 asClass(lin_semaphore){ passover }
 
-semaphoreHandle vmethodimpl(LinuxEnv_Scheduler, newSemaphore, size_t num){
+semaphoreHandle vmethodimpl(LinuxScheduler, initSemaphore, size_t num){
 	lin_semaphore* result = new(lin_semaphore);
 	sem_init(&result->sem, 0, num);
 	switch (errno) {
@@ -178,7 +178,7 @@ semaphoreHandle vmethodimpl(LinuxEnv_Scheduler, newSemaphore, size_t num){
 return result;
 }
 
-errvt vmethodimpl(LinuxEnv_Scheduler, waitSemaphore, semaphoreHandle handle){
+errvt vmethodimpl(LinuxScheduler, waitSemaphore, semaphoreHandle handle){
 	if(sem_wait(&((lin_semaphore*)handle)->sem) == -1){
 		switch (errno) {
 		
@@ -186,7 +186,7 @@ errvt vmethodimpl(LinuxEnv_Scheduler, waitSemaphore, semaphoreHandle handle){
 	}
 return OK;
 }
-errvt vmethodimpl(LinuxEnv_Scheduler, postSemaphore, semaphoreHandle handle){
+errvt vmethodimpl(LinuxScheduler, postSemaphore, semaphoreHandle handle){
 	if(sem_post(&((lin_semaphore*)handle)->sem) == -1){
 		switch (errno) {
 		
@@ -194,7 +194,7 @@ errvt vmethodimpl(LinuxEnv_Scheduler, postSemaphore, semaphoreHandle handle){
 	}
 return OK;
 }
-errvt vmethodimpl(LinuxEnv_Scheduler, tryWaitSemaphore, semaphoreHandle handle){
+errvt vmethodimpl(LinuxScheduler, tryWaitSemaphore, semaphoreHandle handle){
 	if(sem_wait(&((lin_semaphore*)handle)->sem) == -1){
 		switch (errno) {
 		
@@ -203,45 +203,43 @@ errvt vmethodimpl(LinuxEnv_Scheduler, tryWaitSemaphore, semaphoreHandle handle){
 return OK;
 }
 
-errvt vmethodimpl(LinuxEnv_Scheduler, handleProcEvents, processHandle process, Queue(OSEvent) evntQueue){}
-errvt vmethodimpl(LinuxEnv_Scheduler, handleThrdEvents, threadHandle thread, Queue(OSEvent) evntQueue){}
-errvt vmethodimpl(LinuxEnv_Scheduler, traceProcess, processHandle process){
-	
-
-}
-errvt vmethodimpl(LinuxEnv_Scheduler, waitThread){}
-bool vmethodimpl(LinuxEnv_Scheduler,  isProcessRunning){}
-u64 vmethodimpl(LinuxEnv_Scheduler,   pollEvents){}
-errvt vmethodimpl(LinuxEnv_Scheduler, initSystem){}
-errvt vmethodimpl(LinuxEnv_Scheduler, exitSystem){}
-
-
-
-
-
+errvt vmethodimpl(LinuxScheduler, handleProcEvents, processHandle process, Queue(OSEvent) evntQueue){}
+errvt vmethodimpl(LinuxScheduler, handleThrdEvents, threadHandle thread, Queue(OSEvent) evntQueue){}
+errvt vmethodimpl(LinuxScheduler, waitThread){}
+bool vmethodimpl(LinuxScheduler,  isProcessRunning){}
+u64 vmethodimpl(LinuxScheduler,   pollEvents){}
+errvt vmethodimpl(LinuxScheduler, initSystem){}
+errvt vmethodimpl(LinuxScheduler, exitSystem){}
 
 const ImplAs(scheduler, LinuxScheduler){
-	.sleep		   = LinuxEnv_Scheduler_sleep,
-	.newThread	   = LinuxEnv_Scheduler_newThread,
-	.newProcess	   = LinuxEnv_Scheduler_newProcess,
-	.killProcess	   = LinuxEnv_Scheduler_killProcess,
-	.getCurrentThread  = LinuxEnv_Scheduler_getCurrentThread,
-	.handleProcEvents  = LinuxEnv_Scheduler_handleProcEvents,
-	.handleThrdEvents  = LinuxEnv_Scheduler_handleThrdEvents,
-	.traceProcess  	   = LinuxEnv_Scheduler_traceProcess,
-	.waitThread  	   = LinuxEnv_Scheduler_waitThread,
-	.isProcessRunning  = LinuxEnv_Scheduler_isProcessRunning,
-	.pollEvents 	   = LinuxEnv_Scheduler_pollEvents,
-	.initSystem 	   = LinuxEnv_Scheduler_initSystem,
-	.exitSystem 	   = LinuxEnv_Scheduler_exitSystem,
-	.threadutils = {
-		.newMutex	   = LinuxEnv_Scheduler_newMutex,
-		.lockMutex	   = LinuxEnv_Scheduler_lockMutex,
-		.unlockMutex	   = LinuxEnv_Scheduler_unlockMutex,
-		.tryLockMutex	   = LinuxEnv_Scheduler_tryLockMutex,
-		.newSemaphore	   = LinuxEnv_Scheduler_newSemaphore,
-		.waitSemaphore	   = LinuxEnv_Scheduler_waitSemaphore,
-		.postSemaphore	   = LinuxEnv_Scheduler_postSemaphore,
-		.tryWaitSemaphore  = LinuxEnv_Scheduler_tryWaitSemaphore,
+	.pollEvents 	   	= LinuxScheduler_pollEvents,
+	.initSystem 	   	= LinuxScheduler_initSystem,
+	.exitSystem 	   	= LinuxScheduler_exitSystem,
+	.thread = {
+		.init	   	= LinuxScheduler_initThread,
+		.sleep		= LinuxScheduler_sleep,
+		.getCurrent  	= LinuxScheduler_getCurrentThread,
+		.wait  	   	= LinuxScheduler_waitThread,
+		.handleEvents  	= LinuxScheduler_handleThrdEvents,
+	},
+	.process = {
+		.init	   	= LinuxScheduler_initProcess,
+		.isRunning  	= LinuxScheduler_isProcessRunning,
+		.kill	   	= LinuxScheduler_killProcess,
+		.handleEvents  	= LinuxScheduler_handleProcEvents,
+	},
+	.ctrl = {
+	    .mutex = {
+		.init		= LinuxScheduler_initMutex,
+		.lock		= LinuxScheduler_lockMutex,
+		.unlock		= LinuxScheduler_unlockMutex,
+		.tryLock	= LinuxScheduler_tryLockMutex,
+	    },
+	    .semaphore = {
+		.init	   	= LinuxScheduler_initSemaphore,
+		.wait		= LinuxScheduler_waitSemaphore,
+		.post		= LinuxScheduler_postSemaphore,
+		.tryWait	= LinuxScheduler_tryWaitSemaphore,
+	    }
 	}
 };
