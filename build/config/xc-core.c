@@ -1,7 +1,6 @@
 /*
 ExtraC CORE Configuration File
 */
-
 #if defined (			__ERROR_CODES__				)
 /*---------------------------------------------------------------------------*/
 	ERR_NONE, ERR_INVALID, ERR_NULLPTR, ERR_INITFAIL, 
@@ -20,6 +19,9 @@ ExtraC CORE Configuration File
 	#include "./xc-os.c"
 	#include "./xc-resource.c"
 	#include "./xc-routines.c"
+	#ifdef __linux__
+		#include "xc-builtin/os-linux.c"	
+	#endif
 
 #elif defined( 			__FORMAT_CODES__			)
 /*---------------------------------------------------------------------------*/
@@ -37,6 +39,10 @@ ExtraC CORE Configuration File
 	
 	#include "./xc-os.c"
 	#include "./xc-resource.c"
+	#ifdef __linux__
+		#include "xc-builtin/os-linux.c"	
+	#endif
+
 
 #undef FORMAT
 #elif defined( 			__GLOBAL_METHODS__			)
