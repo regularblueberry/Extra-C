@@ -21,13 +21,13 @@ Type(HTTPHeader,
 	cstr key, value;
 )
 
-Protocal(HTTP_Request,
+Protocol(HTTP_Request,
 	HTTPMethod method;
 	cstr route;
 	HTTPHeader* headers;
 ){}
 
-Protocal(HTTP_Response,
+Protocol(HTTP_Response,
 	u16 statuscode;
 	HTTPHeader* headers;
 ){}

@@ -111,7 +111,7 @@ networkHandle vmethodimpl(LinuxNetwork, SocketInit, socketType type){
 		ERR(NETERR_SOCKINVAL, "invalid socket type out of range");
 		return NULL;
 	}
-	int protocalFlag = (type & 0b11), domainFlag = (type & 0b1100) >> 2; 
+	int protocolFlag = (type & 0b11), domainFlag = (type & 0b1100) >> 2; 
 
 
 	int domain = 
@@ -120,24 +120,24 @@ networkHandle vmethodimpl(LinuxNetwork, SocketInit, socketType type){
 		domainFlag == D_LOCAL ? AF_LOCAL :
 		-1;
 
-	int protocal = 
-		protocalFlag == P_UDP ? SOCK_DGRAM  :
-		protocalFlag == P_TCP ? SOCK_STREAM :
-		protocalFlag == P_RAW ? SOCK_RAW :
+	int protocol = 
+		protocolFlag == P_UDP ? SOCK_DGRAM  :
+		protocolFlag == P_TCP ? SOCK_STREAM :
+		protocolFlag == P_RAW ? SOCK_RAW :
 		-1;
 
 	if(-1 == domain ) {ERR(
 	      NETERR_SOCKINVAL, "invalid domain type"); return NULL;}
 	
-	if(-1 == protocal ) {ERR(
-	      NETERR_SOCKINVAL, "invalid protocal type"); return NULL;}
+	if(-1 == protocol ) {ERR(
+	      NETERR_SOCKINVAL, "invalid protocol type"); return NULL;}
 
 
 	LinuxNetworkHandle* result = new(LinuxNetworkHandle,
 		.type = NetData_Socket,
 		.data.socket = {
-			.fd = socket(domain, protocal, 0),
-			.protocal = protocal,
+			.fd = socket(domain, protocol, 0),
+			.protocol = protocol,
 			.domain = domain,
 		}		
 	);
@@ -174,7 +174,7 @@ return OK;
 }
 networkHandle vmethodimpl(LinuxNetwork, SocketConnect, socketType type, socketAddress* address){
 
-	int protocalFlag = (type & 0b11), domainFlag = (type & 0b1100) >> 2; 
+	int protocolFlag = (type & 0b11), domainFlag = (type & 0b1100) >> 2; 
 
 	if(domainFlag != address->type){
 		ERR(ERR_INVALID, "socket domain type does not match address type");
@@ -218,7 +218,7 @@ networkHandle vmethodimpl(LinuxNetwork, SocketAccept, networkHandle handle){
 			.fd = fd,
 			.blocking = socket->blocking,
 			.domain = socket->domain,
-			.protocal = socket->protocal,
+			.protocol = socket->protocol,
 		}
 	);
 
@@ -248,7 +248,7 @@ errvt vmethodimpl(LinuxNetwork, SocketGroupJoin, networkHandle handle, socketAdd
 	if(socket->domain != P_UDP ||
 	   socket->domain != P_RAW) 
 		return ERR(
-			NETERR_CONNECT, "only UPD and RAW protocals can join a multicast group");
+			NETERR_CONNECT, "only UPD and RAW protocols can join a multicast group");
 
 	if(0 == XCAddrToUnix(
 		    socket->domain, 

@@ -142,10 +142,10 @@ errvt methodimpl(Connection, GroupJoin,, void* address, void* interface_addr){
 	nonull(self);
 	nonull(address);
 
-	if(priv->settings.domain != SOCKET_PROTOCAL_UDP ||
-	   priv->settings.domain != SOCKET_PROTOCAL_RAW) 
+	if(priv->settings.domain != SOCKET_PROTOCOL_UDP ||
+	   priv->settings.domain != SOCKET_PROTOCOL_RAW) 
 		return ERR(
-			NETERR_CONNECT, "only UPD and RAW protocals can join a multicast group");
+			NETERR_CONNECT, "only UPD and RAW protocols can join a multicast group");
 
 	if(0 == XCAddrToUnix(
 		    priv->settings.domain, 
@@ -311,10 +311,10 @@ construct(Connection,
 		args.settings.domain == SOCKET_DOMAIN_LOCAL ? AF_LOCAL :
 		-1;
 
-	int protocal = 
-		args.settings.protocal == SOCKET_PROTOCAL_UDP ? SOCK_DGRAM  :
-		args.settings.protocal == SOCKET_PROTOCAL_TCP ? SOCK_STREAM :
-		args.settings.protocal == SOCKET_PROTOCAL_RAW ? SOCK_RAW :
+	int protocol = 
+		args.settings.protocol == SOCKET_PROTOCOL_UDP ? SOCK_DGRAM  :
+		args.settings.protocol == SOCKET_PROTOCOL_TCP ? SOCK_STREAM :
+		args.settings.protocol == SOCKET_PROTOCOL_RAW ? SOCK_RAW :
 		-1;
 
 	if(-1 == domain ){
@@ -322,13 +322,13 @@ construct(Connection,
 	      return NULL;
 	}
 	
-	if(-1 == protocal ){
+	if(-1 == protocol ){
 	      ERR(NETERR_CONNECT, "invalid domain setting");
 	      return NULL;
 	}
 
 	setpriv(Connection){
-		.fd = socket(domain, protocal, 0),
+		.fd = socket(domain, protocol, 0),
 		.settings = args.settings,
 		.sizeofaddr = XCAddrToUnix(
 			args.settings.domain,

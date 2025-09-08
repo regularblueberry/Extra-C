@@ -85,20 +85,20 @@ construct(Socket,
 		args.settings.domain == SOCKET_DOMAIN_LOCAL ? AF_LOCAL :
 		-1;
 
-	int protocal = 
-		args.settings.protocal == SOCKET_PROTOCAL_UDP ? SOCK_DGRAM  :
-		args.settings.protocal == SOCKET_PROTOCAL_TCP ? SOCK_STREAM :
-		args.settings.protocal == SOCKET_PROTOCAL_RAW ? SOCK_RAW :
+	int protocol = 
+		args.settings.protocol == SOCKET_PROTOCOL_UDP ? SOCK_DGRAM  :
+		args.settings.protocol == SOCKET_PROTOCOL_TCP ? SOCK_STREAM :
+		args.settings.protocol == SOCKET_PROTOCOL_RAW ? SOCK_RAW :
 		-1;
 
 	if(-1 == domain ) {ERR(
 	      NETERR_SOCKINVAL, "invalid domain setting"); return NULL;}
 	
-	if(-1 == protocal ) {ERR(
-	      NETERR_SOCKINVAL, "invalid protocal setting"); return NULL;}
+	if(-1 == protocol ) {ERR(
+	      NETERR_SOCKINVAL, "invalid protocol setting"); return NULL;}
 
 	setpriv(Socket){
-		.fd = socket(domain, protocal, 0),
+		.fd = socket(domain, protocol, 0),
 		.settings = args.settings
 	};
 	

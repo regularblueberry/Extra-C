@@ -11,11 +11,11 @@
 #define D_IPV6  0x02
 #define D_LOCAL 0x03
 
-#define Protocal(name, ...) 					\
+#define Protocol(name, ...) 					\
 	typedef struct{ __VA_ARGS__ } name##_header; 		\
 	inline Packet msg##name(name##_header header, Packet body)
 
-#define msgHandler(protocal, ...) 				\
+#define msgHandler(protocol, ...) 				\
 	inline Packet msg##name(name##_header header, Packet body)
 
 #define msgBuild(packet, ...){ 			\
@@ -38,18 +38,18 @@
 #define msgBuff(buff, size) (Packet){size,buff}
 #define msgString(string) __parent_packet = (Packet){strnlen(string, UINT64_MAX), string}; 
 #define msgText(...) msgString(#__VA_ARGS__)
-#define msg(protocal, ...)	 		\
-	 Packet* protocal##_packet 		\
+#define msg(protocol, ...)	 		\
+	 Packet* protocol##_packet 		\
 		 = &__parent_packet; 		\
 	for(Packet __parent_packet = {0};	\
-	    protocal##_packet->size == 0; 	\
-	    *protocal##_packet = msg##protocal(	\
-		(protocal##_header){__VA_ARGS__}\
+	    protocol##_packet->size == 0; 	\
+	    *protocol##_packet = msg##protocol(	\
+		(protocol##_header){__VA_ARGS__}\
 		, __parent_packet))
 
 
 Type(socket_settings,
-	u8 protocal : 2;
+	u8 protocol : 2;
 	u8 domain   : 2;
 	u8 blocking : 1;
 )

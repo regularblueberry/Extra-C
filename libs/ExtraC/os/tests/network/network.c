@@ -27,7 +27,7 @@ int server_func(inst(Thread) thread, void* args){
 		(socket_settings){
 			.blocking = false,
 			.domain = SOCKET_DOMAIN_LOCAL,
-			.protocal = SOCKET_PROTOCAL_RAW
+			.protocol = SOCKET_PROTOCOL_RAW
 		});
 	
 	Socket.Bind(test_socket, &(address_socklocal){s("/tmp/__TEST_SOCKET")});
@@ -58,7 +58,7 @@ NEW_TEST("Socket Connection Local"){
 		(socket_settings){
 			.blocking = false,
 			.domain = SOCKET_DOMAIN_LOCAL,
-			.protocal = SOCKET_PROTOCAL_RAW
+			.protocol = SOCKET_PROTOCOL_RAW
 		},
 		&(address_socklocal){s("/tmp/__TEST_SOCKET")});
 
