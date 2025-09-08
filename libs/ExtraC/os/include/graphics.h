@@ -81,20 +81,20 @@ Interface(graphics,
 	u64 		  	vmethod(pollEvents);
 )
 
-Enum(displayEvent_Type,
-    displayEvent_Resize,	
-    displayEvent_Close,	
-    displayEvent_Visibility,	
+Enum(DisplayEvent_Type,
+    DisplayEvent_Resize,	
+    DisplayEvent_Close,	
+    DisplayEvent_Visibility,	
 )
-Type(displayEvent,
+Type(DisplayEvent,
     	graphicsHandle handle;
- 	displayEvent_Type type;
+ 	DisplayEvent_Type type;
 )
 
-Enum(videoEvent_Type,
-    videoEvent_NewFrame,
+Enum(VideoEvent_Type,
+    VideoEvent_NewFrame,
 )
-Type(videoEvent,
+Type(VideoEvent,
     	graphicsHandle handle;
- 	videoEvent_Type type;
+ 	VideoEvent_Type type;
 )

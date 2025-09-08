@@ -39,9 +39,9 @@ Interface(input,
 	u64 		  vmethod(pollEvents);
 )
 
-Enum(inputEvent_Type,
-	inputEvent_Update,
-	inputEvent_Close
+Enum(InputEvent_Type,
+	InputEvent_Update,
+	InputEvent_Close
 )
 
 
@@ -49,9 +49,9 @@ Enum(inputEvent_Type,
 #define AXIS_Y 1
 #define AXIS_Z 2
 
-Type(inputEvent,
+Type(InputEvent,
 	inputDevice* device;
-	inputEvent_Type type;
+	InputEvent_Type type;
      	union {
 	  struct{
 		float axis[3];

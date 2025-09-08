@@ -21,12 +21,12 @@ Type(audioDevice,
     
 	audioDirection direction;
 
-	u32 maxChannels;              	// Maximum number of channels supported.
+	u32  maxChannels;              	// Maximum number of channels supported.
     	u32* supportedSampleRates; 	// A list of supported sample rates (terminated by 0).
     	u32* supportedBitsPerSample;  	// A list of supported bits per sample (terminated by 0).
-    	u32 minLatencyFrames;         	// Minimum latency in frames.
-    	u32 maxLatencyFrames;         	// Maximum latency in frames.
-    	u32 defaultLatencyFrames;     	// Default latency in frames.
+    	u32  minLatencyFrames;         	// Minimum latency in frames.
+    	u32  maxLatencyFrames;         	// Maximum latency in frames.
+    	u32  defaultLatencyFrames;     	// Default latency in frames.
 
 )
 
@@ -49,11 +49,11 @@ Interface(audio,
 	u64 		  	vmethod(pollEvents);
 )
 
-Enum(audioEvent_Type,
-	audioEvent_NewFrame,
+Enum(AudioEvent_Type,
+	AudioEvent_NewFrame,
 )
 
-Type(audioEvent,
+Type(AudioEvent,
 	audioHandle handle;
-	audioEvent_Type type;
+	AudioEvent_Type type;
 )

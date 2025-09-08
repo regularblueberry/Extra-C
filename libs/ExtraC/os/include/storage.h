@@ -1,6 +1,7 @@
 #pragma once
 #include "./extern.h"
 #include "./user.h"
+#include <stddef.h>
 
 #define FS_DIR true
 #define FS_FILE false
@@ -22,6 +23,20 @@ Type(fsEntry,
 	inst(Time) time_modified;
 )
 
+Type(storageDevice,
+	inst(String) name;
+	inst(String) manufacturer;
+	inst(String) model;
+
+	void* uniqueID;
+	size_t  // The size in bytes of a single unit 
+		// a.k.a KiB == 1,000, MiB = 100,000, etc
+		measure,  
+		exponant,	// storage_size = (measure * value)^exponant
+		value;
+)
+
+
 Interface(storage,
     namespace(device,
 	
@@ -41,9 +56,10 @@ Interface(storage,
 	  	ROOT;
 	)
 	storageHandle vmethod(open,    bool DIR, fsPath path, int flags);
-	errvt 	 vmethod(search,  fsPath path, fsEntry* ent);
+	errvt 	 vmethod(search,  fsPath path,   fsEntry* ent);
 	errvt  	 vmethod(delete,  fsPath path);
 	errvt  	 vmethod(chdir,   fsPath path);
+	errvt  	 vmethod(getInfo, storageHandle handle, fsEntry* ent);
 	u64  	 vmethod(pollEvents);
 	namespace(ext,
 		const bool implemented;
@@ -58,4 +74,15 @@ Interface(storage,
 	i64 	 vmethod(read,         storageHandle handle, pntr data, size_t size);
 	errvt  	 vmethod(close,        storageHandle handle);
 	errvt  	 vmethod(handleEvents, storageHandle handle, Queue(OSEvent) evntQueue);
+)
+
+
+Enum(FileSysEvent_Type,
+    FileSysEvent_Write,
+    FileSysEvent_Read,
+    FileSysEvent_Delete
+)
+Type(FileSysEvent,
+    storageHandle handle;
+    FileSysEvent_Type type;
 )

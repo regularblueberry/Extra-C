@@ -68,9 +68,12 @@ Type(netobjInfo,
 
 
 Type(networkDevice,
-	data(String)
-     	* name,          	
-     	* description;          
+	inst(String) name;
+	inst(String) manufacturer;
+	inst(String) model;
+
+	void* uniqueID;
+
 	u8 mac_address[6]; 	
 	bool up; 		
 )
@@ -126,14 +129,38 @@ Interface(network,
 	errvt 	  	vmethod(handleEvents,  	 networkHandle handle, Queue(OSEvent) evntQueue);
 	u64 	  	vmethod(pollEvents);
 )
-Enum(socketEventType,
-    socketEvent_NewClient,
-    socketEvent_Recive,
-    socketEvent_Close
+Enum(SocketEventType,
+    SocketEvent_NewClient,
+    SocketEvent_Recive,
+    SocketEvent_Close
 )
-Type(socketEvent,
+
+Type(SocketEvent,
     networkHandle handle;
-    socketEventType type;
+    SocketEventType type;
+)
+
+
+
+Enum(NetObjEventType,
+    NetObjEvent_NewClient,
+    NetObjEvent_Recive,
+    NetObjEvent_Close
+)
+Type(NetObjEvent,
+    networkHandle handle;
+    NetObjEventType type;
+)
+
+
+Enum(NetDeviceEventType,
+    NetDeviceEvent_NewClient,
+    NetDeviceEvent_Recive,
+    NetDeviceEvent_Close
+)
+Type(NetDeviceEvent,
+    networkHandle handle;
+    NetDeviceEventType type;
 )
 
 

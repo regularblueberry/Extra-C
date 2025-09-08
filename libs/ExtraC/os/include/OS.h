@@ -14,27 +14,45 @@
 
 typedef u32 OSEventType;
 
-#define SYS_GRAPHICS 0
-  #define SYS_GRAPHICS_DISPLAY 0
-  #define SYS_GRAPHICS_VIDEO   1
+Enum(OSResouceType,
+	SYS_GRAPHICS  = 0,
+	  SYS_GRAPHICS_DISPLAY = 0,
+	  SYS_GRAPHICS_VIDEO   = 1,
+	
+	SYS_AUDIO     = 1, 
+	
+	SYS_INPUT     = 2,
+	  SYS_INPUT_POS = 0,
+	  SYS_INPUT_KEY = 1,
+	
+	SYS_NETWORK   = 3,
+	  SYS_NETWORK_SOCKET = 0,
+	  SYS_NETWORK_OBJECT = 1,
+	  SYS_NETWORK_DEVICE = 2,
+	
+	SYS_SCHEDULER = 4,
+	  SYS_SCHEDULER_PROCESS = 0,
+	
+	SYS_STORAGE   = 5,
+	  SYS_STORAGE_FILESYS = 0,
+	  SYS_STORAGE_DEVICE  = 1,
+)
 
-#define SYS_AUDIO 1 
 
-#define SYS_INPUT 2 
-  #define SYS_INPUT_POS 0 
-  #define SYS_INPUT_KEY 1 
-
-#define SYS_NETWORK 3
 
 Type(OSEvent,
-	u8 osSystem   : 4;
-     	u8 osResource : 4;
+	u8 osSystem   ;
+     	u8 osResource ;
 	union {
-		inputEvent input;
-		socketEvent socket;
-		displayEvent display;
-		videoEvent video;
-		audioEvent audio;
+		InputEvent input;
+		SocketEvent socket;
+		DisplayEvent display;
+		VideoEvent video;
+		AudioEvent audio;
+		NetObjEvent network_object;
+		NetDeviceEvent network_device;
+		FileSysEvent filesys;
+		ProcessEvent process;
      	}data;
 )
 
@@ -57,9 +75,9 @@ Static(OS,
 	interface(user);		
 
 	cstr OSName;
-	errvt vmethod(initOS, AppData appData);
-	errvt vmethod(exitOS);
-	u64   vmethod(pollEvents);
+	errvt   vmethod(initOS, AppData appData);
+	errvt   vmethod(exitOS);
+	u64     vmethod(pollEvents);
 	AppData vmethod(getAppData);
 );
 
