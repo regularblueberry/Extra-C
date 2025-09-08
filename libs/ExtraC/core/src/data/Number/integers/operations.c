@@ -3,19 +3,6 @@
 
 errvt methodimpl(Number, IntAdd,, inst(Number) other, inst(Number) result) {
 
-	nonull(other, return NULL);
-	nonull(self, return NULL);
-
-	// Handle cases where one of the operands is zero
-	if (isZero(self) || isZero(other)) {
-		inst(List) zero_operand = isZero(self) ? opriv->digits : priv->digits;
-		
-		List.Pop(rpriv->digits, 1);
-		List.Insert(rpriv->digits, 0, List.Size(zero_operand), List.GetPointer(zero_operand, 0));
-		
-		Number_clearLeadingZeros(rpriv);
-		return OK;
-	}
 	check(
 	if (priv->sign == opriv->sign) {
 	   	Number_absoluteAdd(rpriv, priv, opriv);
@@ -49,24 +36,6 @@ return OK;
 
  errvt methodimpl(Number, IntSubtract,, inst(Number) other, inst(Number) result) {
 	
-	nonull(other, return NULL);
-	nonull(self, return NULL);
-	
-
-	// Handle cases where one of the operands is zero
-	if (isZero(self) || isZero(other)) {
-		inst(List) zero_operand = priv->digits;
-		if(isZero(self)){
-			zero_operand = opriv->digits;
-			rpriv->sign = opriv->sign * -1;
-		}
-		
-		List.Pop(rpriv->digits, 1);
-		List.Insert(rpriv->digits, 0, List.Size(zero_operand), List.GetPointer(zero_operand, 0));
-		
-		Number_clearLeadingZeros(rpriv);
-		return OK;
-	}
 	check(
 	if (priv->sign != opriv->sign) {
 	   	Number_absoluteAdd(rpriv, priv, opriv);
@@ -132,7 +101,7 @@ errvt methodimpl(Number, IntDivide,, inst(Number) other, inst(Number) remainder,
 	u32* resbuff = List.GetPointer(rpriv->digits, 0);
 	
 	Number_Private 
-		* tempRemainder = makeTempNum(pushList(u32, 10), precision), 
+		* tempRemainder = makeTempNum(pushList(u32, 10),   precision), 
 		* tempProduct	= makeTempNum(pushList(u32, 10),   precision);
 	
 	for (int i = a_size - 1; i >= 0; i--) {
