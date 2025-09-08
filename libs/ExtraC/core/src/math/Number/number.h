@@ -1,5 +1,5 @@
 #pragma once
-#include "../datastructs.h"
+#include "../maths.h"
 
 private(Number,
  	List(u32) digits; 

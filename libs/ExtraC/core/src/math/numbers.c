@@ -1,4 +1,4 @@
-#include "./datastructs.h"
+#include "./maths.h"
 #include "Number/number.h"
 #include "Number/integers/operations.c"
 #include "Number/integers/format.c"
@@ -274,8 +274,8 @@ errvt methodimpl(Number, DivideInto,,   inst(Number) a, inst(Number) b, inst(Num
 	case NUM_LESSER:
 		List.Append(
 			rmpriv->digits, 
-			apriv->digits->__private->data, // direct accessing private variables for speed
-			apriv->digits->__private->items
+			List.GetPointer(apriv->digits, 0), 
+			List.Size(apriv->digits)
 		);
 	break;
 	// If abs(dividend) == abs(divisor), result is 1 (with appropriate sign), remainder is 0.
