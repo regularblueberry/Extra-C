@@ -140,23 +140,18 @@ u64 imethodimpl(StringBuilder, Print,, FormatID* formats, inst(StringBuilder) ou
 	
 	self(StringBuilder);
 
-	char buff[40];
 	List.Append(priv->data, "\0", 1);
 	
-	u64 formated_len = snprintf(buff, 40, "(StringBuilder){ max_len = %lu, str = ",
-	  priv->max_len);
+	u64 formated_len = StringBuilder.Append(out, NULL, 
+			"(StringBuilder){ max_len = ",$(priv->max_len),", str = \"", 
+	endstr);
 	
-	StringBuilder.Append(out, &(String_Instance){.txt = buff, .len = formated_len});
-	
-	StringBuilder.Append(out, &(String_Instance){
+	formated_len += StringBuilder.Append(out, &(String_Instance){
 		.txt = List.GetPointer(priv->data, 0), 
-		.len = List.Size(priv->data)});
+		.len = List.Size(priv->data)
+	});
 	
-
-	formated_len += List.Size(priv->data);
-
-	StringBuilder.Append(out, s("}"));
-	formated_len++;
+	formated_len += StringBuilder.Append(out, s("\" }"));
 
 	List.Pop(priv->data, 1);
 return formated_len;
