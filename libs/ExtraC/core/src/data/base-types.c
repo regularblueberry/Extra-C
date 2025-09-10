@@ -1,7 +1,4 @@
 #include "./datastructs.h"
-#include "data.h"
-#include "types.h"
-#include <stdlib.h>
 
 #define skipWS(in, num) while(isblank(in->txt[num])) num++;
 
@@ -63,24 +60,45 @@ Impl(Boolean){
 -----*/
 
 u64 imethodimpl(Integer, Print,, FormatID* formats, inst(StringBuilder) out){
-self(Integer);
-return Number.Formatter.Print(
-	generic &(Number_Instance){
-		.type = self->sign ? N_SIGNED : N_UNSIGNED,
-		.len = self->longint ? sizeof(u64) : sizeof(u32),
-		.as_u64 = *cast(u64*)object,
-	},
-	formats, out 
-);
+	self(Integer);
+	char buff[22] = {0};
+	u64 formatted_len = snprintf(buff, 22, 
+		self->longint ?
+			self->sign ? "%li" : "%lu" :
+    			self->sign ? "%i"  : "%u",
+	*(u64*)self->data
+	);
+
+	if(formatted_len != 0)
+		StringBuilder.Append(out, &(data(String)){
+			.txt = buff,
+			.len = formatted_len
+		});
+
+return formatted_len;
 }
 
 u64 imethodimpl(Integer, Scan,, FormatID* formats, inst(String) in){
-	Number_Instance res = {0};			
-	u64 actual_len = Number.Formatter.Scan 	
-		(generic &res, formats, in);			
-	*cast(u64*)object = res.as_u64;	
-return actual_len;
+	self(Integer);
+	if(in->txt[in->len + 1] != '\0') {
+		ERR(ERR_INVALID, "in order to properly scan a string for an integer the string must be null terminated");
+		return 0;
+	}
+	u64 numBuff = 0, scannedLen = 0, 
+
+	scanned = sscanf(in->txt,    
+	    self->longint ?
+	  	self->sign ? "%li%n" : "%lu%n" :
+    		self->sign ? "%i%n"  : "%u%n",
+	&numBuff,
+	(int*)&scannedLen);
+
+	if(scanned)
+		*(u64*)self->data = numBuff;	
+	
+return scannedLen;
 }
+
 Impl(Integer){
 	.Formatter = {
 		.Scan = Integer_Scan,
@@ -98,7 +116,7 @@ self(Float);
 return Number.Formatter.Print(
 	generic &(Number_Instance){
 		.len = self->dbl ? sizeof(double) : sizeof(float),
-		.as_u64 = *cast(u64*)object,
+		.as_u64 = *(u64*)object,
 	},
 	formats, out 
 );
@@ -136,11 +154,13 @@ return print_len;
 }
 
 u64 imethodimpl(Pointer, Scan,, FormatID* formats, inst(String) in){
-	Number_Instance res = {0};			
-	u64 actual_len = Number.Formatter.Scan 	
-		(generic &res, formats, in);			
-	*(void**)object = (void*)res.as_u64;		
-return actual_len;
+
+	void* result = NULL;
+
+	u64 scannedLen = 0, scanned = sscanf(in->txt, "%p%n", &result, (int*)&scannedLen);
+
+
+return scannedLen;
 }
 
 Impl(Pointer){
