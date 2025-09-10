@@ -17,17 +17,23 @@ ExtraC OS Linux Configuration File
 #define XC_OSLINUX_CONFIG
 #include "../__config_start.h"
 
+// Graphics Backends
+#define X11 0x11
+#define WayLand 0x3A7
 
-#define LinuxEnv_Display_X11 0x11
-#define LinuxEnv_Display_WayLand 0x3A7
+// Audio Backends
+#define PipeWire 9193
 
-#define	__LinuxEnv_DisplayBackend LinuxEnv_Display_X11
 
-#define LinuxEnv_Audio_PipeWire 9193
+#define	__LinuxEnv_DisplayBackend 		X11
+#define	__LinuxEnv_AudioBackend 		PipeWire
 
-#define	__LinuxEnv_AudioBackend LinuxEnv_Audio_PipeWire
+global value __LinuxEnv_NetObj_DBus_NameMaxLen 	= 2048;
 
-#define __LinuxEnv_NetObj_DBus_NameMaxLen 2048
+
+#undef X11
+#undef WayLand
+#undef PipeWire
 
 #include "../__config_end.h"
 #endif

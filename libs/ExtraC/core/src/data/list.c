@@ -1,5 +1,4 @@
 #include "datastructs.h"
-#include "types.h"
 
 #define insertIntoListAt(index, _data, len) \
 	memcpy(&(((u8*)priv->data)[index * priv->item_size]), _data, priv->item_size * len);
@@ -54,13 +53,12 @@ errvt methodimpl(List,Append,, void* in, u64 len){
 	nonull(self, return err;)
 	nonull(in, return err;)
 
-	if(priv->items + len > priv->items_alloced)
-#if __DataAutoGrow
-		List_Grow(self, priv->items_alloced + (priv->items_alloced / 2) + len);
-#else
-		return ERR(
-		DATAERR_OUTOFRANGE, "grow the list to fit new data");
-#endif
+	if(priv->items + len > priv->items_alloced){
+		if(__List.autoGrow)
+			List_Grow(self, priv->items_alloced + (priv->items_alloced / 2) + len);
+		else
+			return ERR(DATAERR_OUTOFRANGE, "grow the list to fit new data");
+	}
 	insertIntoListAt(priv->items, in, len)
 	
 	priv->items++;
@@ -113,14 +111,12 @@ errvt methodimpl(List,Insert,, u64 len, u64 index, void* in){
 	if(priv->items + len > priv->limit)
 		len = priv->limit - priv->items;
 
-	if(priv->items + len > priv->items_alloced)
-#if __DataAutoGrow 
-		List_Grow(self, len + (priv->items_alloced / 2));
-#else
-		return ERR(
-		DATAERR_OUTOFRANGE, "grow the list to fit new data");
-#endif
-	
+	if(priv->items + len > priv->items_alloced){
+		if(__List.autoGrow)
+			List_Grow(self, len + (priv->items_alloced / 2));
+		else
+			return ERR(DATAERR_OUTOFRANGE, "grow the list to fit new data");
+	}
 
 	if(index == priv->items){
 		insertIntoListAt(priv->items, in, len)

@@ -61,7 +61,7 @@ ExtraC CORE Configuration File
 #include "__config_start.h"
 
 define(XC_DataStructs){
-	value maxSize;
+	value maxSize; setting autoGrow;
 }; 
 #define __HeaderOnly			false
 
@@ -69,22 +69,24 @@ define(XC_DataStructs){
 
 #define __HijackMalloc 			true
 
-#define __DataAutoGrow			true
-
-#define __stdLoggerName		 	"Log"
+#define __stdLoggerName			"Log"
 
 global config(XC_DataStructs) 
 __List = { 
-	.maxSize 			= INT64_MAX
+	.maxSize 			= INT64_MAX,
+	.autoGrow			= true
 },
 __Queue = { 
-	.maxSize 			= INT64_MAX
+	.maxSize 			= INT64_MAX,
+	.autoGrow			= true,
 },
 __Stack = { 
-	.maxSize 			= INT64_MAX
+	.maxSize 			= INT64_MAX,
+	.autoGrow			= true,
 },
 __Map = { 
-	.maxSize 			= INT64_MAX
+	.maxSize 			= INT64_MAX,
+	.autoGrow			= true
 };
 
 #include "__config_end.h"

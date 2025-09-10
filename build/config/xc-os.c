@@ -30,6 +30,10 @@ ExtraC OS Configuration File
 #ifndef XC_OS_CONFIG
 #define XC_OS_CONFIG
 #include "__config_start.h"
+#include "xc-build.h"
+
+#define __OS_BACKEND 			BUILD_OS_AUTO
+#define __BUILD_OS_CLASSES
 
 #include "__config_end.h"
 #endif
