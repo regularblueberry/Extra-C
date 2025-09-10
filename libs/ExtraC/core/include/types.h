@@ -189,19 +189,19 @@ typedef void* inst;
 #define data(Class) Class##_Instance
 #define ifob(Class) struct{intf(Class) intf; inst(Object) obj;}
 
-#define generic (inst(Object))
+#define generic (void*)
 #define class(type) (inst(type))
-#define cast(type) (type)
+#define like(var) (typeof(var))
 
 #define initialize(name, ptr, ...) name##_Construct((name##_ConstructArgs){__VA_ARGS__}, ptr)
 
 #define new(name, ...) initialize(name, malloc(sizeof(name##_Instance) + sizeof_##name##_Private), __VA_ARGS__)
 #define push(name, ...) initialize(name, alloca(sizeof(name##_Instance) + sizeof_##name##_Private), __VA_ARGS__)
 
-#define del(object) if((generic object)->__methods->__DESTROY == NULL) ERR(ERR_NULLPTR,"no destructor specified for this object"); \
-		    else if((generic object)->__methods->__DESTROY(generic object) == ERR_NONE) free(object);
-#define pop(object) if((generic object)->__methods->__DESTROY == NULL) ERR(ERR_NULLPTR,"no destructor specified for this object"); \
-		    else (generic object)->__methods->__DESTROY(generic (object))
+#define del(object) if((class(Object) object)->__methods->__DESTROY == NULL) ERR(ERR_NULLPTR,"no destructor specified for this object"); \
+		    else if((class(Object) object)->__methods->__DESTROY(generic object) == ERR_NONE) free(object);
+#define pop(object) if((class(Object) object)->__methods->__DESTROY == NULL) ERR(ERR_NULLPTR,"no destructor specified for this object"); \
+		    else (class(Object) object)->__methods->__DESTROY(generic (object))
 /*----------------------|
        Base Types	|
 ----------------------*/

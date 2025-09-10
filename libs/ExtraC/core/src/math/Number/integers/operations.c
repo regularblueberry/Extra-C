@@ -8,7 +8,7 @@ errvt methodimpl(Number, IntAdd,, inst(Number) other, inst(Number) result) {
 	   	Number_absoluteAdd(rpriv, priv, opriv);
 			rpriv->sign = priv->sign;
 	} else {
-		  	switch(Number_absoluteCompare(priv, opriv)) { 
+		switch(Number_absoluteCompare(priv, opriv)) { 
 		case NUM_GREATER:{
 				Number_absoluteSub(rpriv, priv, opriv); 
 				rpriv->sign = priv->sign;
@@ -19,13 +19,12 @@ errvt methodimpl(Number, IntAdd,, inst(Number) other, inst(Number) result) {
 		break;}
 		case NUM_EQUALS:{
 				Number_setZero(rpriv);
-			}
+		break;}
 		default:{ ERR(ERR_NULLPTR, "invalid input"); }
-			}
+		}
 	}){
 		del(result);
-		ERR(err->errorcode, err->message);
-		return NULL;
+		return err->errorcode;
 	}
 
 
@@ -41,7 +40,7 @@ return OK;
 	   	Number_absoluteAdd(rpriv, priv, opriv);
 			rpriv->sign = priv->sign;
 	} else {
-		  	switch(Number_absoluteCompare(priv, opriv)) { 
+		switch(Number_absoluteCompare(priv, opriv)) { 
 		case NUM_GREATER:{
 				Number_absoluteSub(rpriv, priv, opriv); 
 				rpriv->sign = priv->sign;
@@ -52,13 +51,12 @@ return OK;
 		break;}
 		case NUM_EQUALS:{
 				Number_setZero(rpriv);
-			}
+		break;}
 		default:{ERR(ERR_NULLPTR, "invalid input");}
-			}
+		}
 	}){
 		del(result);
-		ERR(err->errorcode, err->message);
-		return NULL;
+		return err->errorcode;
 	}
 
 	Number_clearLeadingZeros(rpriv);

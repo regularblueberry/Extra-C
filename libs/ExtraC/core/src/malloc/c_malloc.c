@@ -33,7 +33,7 @@ void* imethodimpl(CMalloc, New,, u64 bytes_to_alloc, void* ex_args){
 	      	return NULL;
 	}
 
-	u32 size_mem = *cast(u32*)ex_args;
+	u32 size_mem = *(u32*)ex_args;
 
 	if(size_mem == 0){	
 		if(priv->bytes_alloced + bytes_to_alloc > priv->max_alloc){

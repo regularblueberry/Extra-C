@@ -213,7 +213,7 @@ static errvt Number_shiftDigitsRight(Number_Private* res, Number_Private* num, i
 	res->sign = num->sign;
 	inst(List) res_digits = List.SubList(num->digits, 0, size);
 
-	List.Insert(res_digits, cast(u64)shift_blocks, size - shift_blocks, &digits[shift_blocks]);
+	List.Insert(res_digits, (u64)shift_blocks, size - shift_blocks, &digits[shift_blocks]);
 	
 	u64* res_digitsptr = List.GetPointer(res_digits, 0);
 	loop(i, shift_blocks)
