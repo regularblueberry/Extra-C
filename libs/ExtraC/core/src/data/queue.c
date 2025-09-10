@@ -1,5 +1,4 @@
 #include "datastructs.h"
-#include "types.h"
 
 #define EMPTY 0
 #define FULL 1
@@ -56,13 +55,20 @@ errvt methodimpl(Queue, Grow,, u64 add_amount){
 return OK;
 }
 
+errvt methodimpl(Queue, Reserve,, bool exact, u64 amount){
+	if(exact)
+		return Queue_Grow(self, amount);
+	else
+		return Queue_Grow(self, priv->items + (priv->items / 2) + amount);
+}
+
 errvt methodimpl(Queue, Enqueue,, void* item, u64 num){
 	nonull(self, return err);
 	
 	u64 queue_allocsize = get_slot_dist(priv->start, priv->end);
 
 	if(priv->items + num > queue_allocsize)
-			Queue.Grow(self, (queue_allocsize / 2) + num);
+			Queue_Grow(self, (queue_allocsize / 2) + num);
 
 	loop(i, num){
 		if(*priv->writehead == JUMP){
@@ -245,19 +251,23 @@ return formated_len;
 }
 
 construct(Queue,
-	.Enqueue = Queue_Enqueue,
-	.Dequeue = Queue_Dequeue,
-	.Check = Queue_Check,
-	.Count = Queue_Count,
-	.Index = Queue_Index,
-	.Limit = Queue_Limit,
-	.ToPointer = Queue_ToPointer,
-	.Grow = Queue_Grow,
-	.__DESTROY = Queue_Free,
+	.Enqueue 	= Queue_Enqueue,
+	.Dequeue 	= Queue_Dequeue,
+	.Check 		= Queue_Check,
+	.Count 		= Queue_Count,
+	.Index 		= Queue_Index,
+	.Limit 		= Queue_Limit,
+	.ToPointer 	= Queue_ToPointer,
+	.Reserve 	= Queue_Reserve,
+	.__DESTROY 	= Queue_Free,
 	.Formatter = {
-	  	.Print = Queue_Print,
-	  	.Scan = Queue_Scan
-	}
+	  	.Print 	= Queue_Print,
+	  	.Scan 	= Queue_Scan
+	},
+	.IterableList = {
+		.Size  	= generic Queue_Count,
+	  	.Items 	= generic Queue_ToPointer 
+	}	
 ){
 	u64 start_size = args.init_size  == 0 ? 10 : args.init_size;
 	setpriv(Queue){

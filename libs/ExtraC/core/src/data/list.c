@@ -204,7 +204,7 @@ errvt methodimpl(List,Index,, bool write, u64 index, u64 len, void* data){
 
 return OK;
 }
-void* methodimpl(List,GetPointer,,u64 index){
+void* methodimpl(List,GetPointer,, u64 index){
 	
 	nonull(self, return NULL)
 
@@ -213,7 +213,13 @@ void* methodimpl(List,GetPointer,,u64 index){
 		return NULL;
 	}
 
-	return &(((u8*)priv->data)[index * priv->item_size]);
+return &(((u8*)priv->data)[index * priv->item_size]);
+}
+
+void* methodimpl(List, Items){
+	nonull(self, return NULL)
+
+return priv->data;
 }
 
 errvt methodimpl(List,Cast,, DSN_fieldType new_type, u64 new_type_size){
@@ -238,10 +244,11 @@ void methodimpl(List,Flush){
 	
 	priv->items = 0;
 }
-void methodimpl(List,Pop,, u32 num){
-	nonull(self, return)
-	if(num > priv->items)num = priv->items;
+u32 methodimpl(List,Pop,, u32 num){
+	nonull(self, return 0)
+	if(num > priv->items) num = priv->items;
 	priv->items -= num;
+return num;
 }
 
 errvt imethodimpl(List,Free){
@@ -304,25 +311,30 @@ return len;
 }
 
 construct(List,
-	.Limit = List_Limit,
-	.Insert = List_Insert,
-	.Index = List_Index,
-	.SubList = List_SubList,
-	.Append = List_Append,
-	.Flush = List_Flush,
-	.FreeToPointer = List_FreeToPointer,
-	.Size = List_Size,
-	.Pop = List_Pop,
-	.Merge = List_Merge,
-	.Reserve = List_Reserve,
-	.Cast = List_Cast,
-	.SetFree = List_SetFree,
-	.FillSlot = List_FillSlot,
-	.GetPointer = List_GetPointer,
-	.__DESTROY = List_Free,
+	.Limit 		= List_Limit,
+	.Insert 	= List_Insert,
+	.Index 		= List_Index,
+	.SubList 	= List_SubList,
+	.Append 	= List_Append,
+	.Flush 		= List_Flush,
+	.FreeToPointer 	= List_FreeToPointer,
+	.Size 		= List_Size,
+	.Pop 		= List_Pop,
+	.Merge 		= List_Merge,
+	.Reserve 	= List_Reserve,
+	.Cast 		= List_Cast,
+	.SetFree 	= List_SetFree,
+	.FillSlot 	= List_FillSlot,
+	.GetPointer 	= List_GetPointer,
+	.__DESTROY 	= List_Free,
 	.Formatter = {
-		.Print = List_Print,
-	  	.Scan = List_Scan
+		.Print 	= List_Print,
+	  	.Scan 	= List_Scan
+	},
+	.IterableList = {
+		.Items	= generic List_Items,
+	  	.Size	= generic List_Size
+
 	}
 ){
 	*priv = (List_Private){

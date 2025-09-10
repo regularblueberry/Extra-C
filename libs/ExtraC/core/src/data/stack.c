@@ -32,6 +32,7 @@ errvt methodimpl(Stack,Pop,, void* out, u64 num){
 
 return OK;
 }
+
 u64 methodimpl(Stack, Count){
 	nonull(self, return UINT64_MAX);
 
@@ -63,6 +64,15 @@ errvt methodimpl(Stack, Grow,, u64 add_amount){
 
 return OK;
 }
+
+
+errvt methodimpl(Stack, Reserve,, bool exact, u64 amount){
+	if(exact)
+		return Stack_Grow(self, amount);
+	else
+		return Stack_Grow(self, priv->allocednum + (priv->allocednum / 2) + amount);
+}
+
 errvt methodimpl(Stack, Limit,, u64 limit){
 	nonull(self, return err);
 	priv->limit = limit;
@@ -146,18 +156,23 @@ return formated_len;
 
 
 construct(Stack,
-	.Push = Stack_Push,
-	.Pop = Stack_Pop,
-	.Count = Stack_Count,
-	.Check = Stack_Check,
-	.ToPointer = Stack_ToPointer,
-	.Limit = Stack_Limit,
-	.Index = Stack_Index,
-	.Grow = Stack_Grow,
-	.__DESTROY = Stack_Free,
+	.Push		= Stack_Push,
+	.Pop		= Stack_Pop,
+	.Count		= Stack_Count,
+	.Check		= Stack_Check,
+	.ToPointer	= Stack_ToPointer,
+	.Limit		= Stack_Limit,
+	.Index		= Stack_Index,
+	.Reserve	= Stack_Reserve,
+	.__DESTROY	= Stack_Free,
 	.Formatter = {
-		.Scan = Stack_Scan,
-	  	.Print = Stack_Print
+		.Scan	= Stack_Scan,
+	  	.Print	= Stack_Print
+	},
+	.IterableList = {
+		.Size	= generic Stack_Count,
+	  	.Items	= generic Stack_ToPointer
+
 	}
 ){
 
