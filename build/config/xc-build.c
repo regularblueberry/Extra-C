@@ -1,7 +1,13 @@
-#ifndef XC_CORE_CONFIG
-#define XC_CORE_CONFIG
+#ifndef XC_BUILD_CONFIG
+#define XC_BUILD_CONFIG
 #include "__config_start.h"
 #include "xc-build.h"
+
+/** 
+ *  \ingroup configs 
+ *  \defgroup ExtraC
+ */
+
 
 
 

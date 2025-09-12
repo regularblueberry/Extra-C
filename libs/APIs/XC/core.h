@@ -72,3 +72,82 @@ Version(LibC, V_RELEASEDATE,
 		2023
 	#endif
 );
+/*--------------------------------------------------------------|
+ *								|
+ * 			  Documentation 			|
+ *								|
+ -------------------------------------------------------------*/
+/**
+ * \ingroup XC-Package 
+ * \defgroup xc-core-package Core
+ *
+ * @section xc-core Core Package
+ * ***DEPENDENCY LEVEL: 0*** \n 
+ * *Last Updated: September 11, 2025*
+ *
+ * @subsection desc Brief Description
+ * ExtraC's core package contains the core set of features used by 
+ * all other ExtraC's packages, many of the features within this package
+ * act as simple utilities over things such as strings, memory allocation, 
+ * error handling, and timing. It also implements common software development concepts
+ * such as, classes/objects, data structures, vtables, serialization, etc. 
+ * ***(see below for more information)***
+ *
+ * @subsection feat Features
+ * - **Type Features:**
+ *   - Classes and Objects
+ *   - Modules
+ *   - Vtables
+ *   - Heap-Memory Construction/Destruction via. **new/del** macros
+ *   - Stack-Memory Construction/Destruction via. **push/pop** macros
+ *   - Base-Type Redefinitions
+ *
+ * - **Data Features:**
+ *   - *Data Structures*:
+ *  	- List (Dynamic Array)
+ *   	- Stack
+ *   	- Queue
+ *   	- Map
+ *   	- Struct (Dynamic Runtime Structures)
+ *   - Binary/Text Serialization via. DSN class
+ *   - Data Iteration via. IterableList interface and **foreach()** macro
+ *
+ * - **Error Features:**
+ *   - Error Codes
+ *   - Logging via. Logger and LogBook classes
+ *   - *Handling Macro/Utilities*:
+ *   	- Signal Handling
+ *   	- Value Passing
+ *   	- Try-Catch statements
+ *
+ * - **Allocation Features:**
+ *   - Allocator Interface
+ *   - Buffer utilities
+ *   - *Common Allocators*:
+ *   	- Arena 
+ *   	- Pool
+ *   - Heap Allocation Tracking via. CMalloc wrapper class
+ *
+ * - **Math Features:**
+ *   - Arbitrary Length integer/ floating-point numbers via. Number class
+ *   - Arbitrary Length Numbers Operations
+ *   - Vectors and Matrixes
+ *
+ * - **String Features:**
+ *   - UTF8 - 32 Handling, Storage, and Conversion
+ *   - Building via. StringBuilder class 
+ *   - Interpolation and Scanning via. Formatter interface and **$()** macro
+ *   - *Manipulation*:
+ *   	- Concatination
+ *   	- Cutting
+ *   	- Copying
+ *   - Regex and Comparision
+ *
+ * - **Timing Features:**
+ *   - *Time Range Format Representations:*
+ *   	- TimeShort
+ *   	- TimeLong
+ *   	- TimeTiny
+ *   - Timing via. TimeWatch class
+ *   - Conversion Macros
+*/

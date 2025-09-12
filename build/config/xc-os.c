@@ -1,7 +1,9 @@
 /*
 ExtraC OS Configuration File
 */
-
+/**
+ * @file xc-os.c
+*/
 #if defined (			__ERROR_CODES__				)
 /*---------------------------------------------------------------------------*/
 	THREADERR_DESTROY, THREADERR_RUNNING, THREADERR_MUTEX_LOCKED,	

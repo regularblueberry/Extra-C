@@ -1,6 +1,14 @@
 /*
 ExtraC CORE Configuration File
 */
+/**
+* @file xc-core.c
+* @brief ExtraC's core configuration file
+* @author Blueberry
+* @version 0.1.0
+*/
+
+
 #if defined (			__ERROR_CODES__				)
 /*---------------------------------------------------------------------------*/
 	ERR_NONE, ERR_INVALID, ERR_NULLPTR, ERR_INITFAIL, 
@@ -60,9 +68,11 @@ ExtraC CORE Configuration File
 #define XC_CORE_CONFIG
 #include "__config_start.h"
 
-define(XC_DataStructs){
-	value maxSize; setting autoGrow;
-}; 
+/** 
+ *  \ingroup ExtraC 
+ *  \defgroup xc-core-config Core
+ */
+
 #define __HeaderOnly			false
 
 #define __Debug 			true
@@ -70,6 +80,10 @@ define(XC_DataStructs){
 #define __HijackMalloc 			true
 
 #define __stdLoggerName			"Log"
+
+define(XC_DataStructs){
+	value maxSize; setting autoGrow;
+}; 
 
 global config(XC_DataStructs) 
 __List = { 
@@ -88,6 +102,7 @@ __Map = {
 	.maxSize 			= INT64_MAX,
 	.autoGrow			= true
 };
+
 
 #include "__config_end.h"
 #endif
